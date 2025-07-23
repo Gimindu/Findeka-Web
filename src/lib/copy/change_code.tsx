@@ -15,7 +15,7 @@ import NotificationPage from '../Notification';
 
 const LostFoundAI2 = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true); // collapsed by default for mobile
   type User = { name: string; rank?: string } | null;
   const [user, setUser] = useState<User>(null);
   const [setIsLoggedIn] = useState(false);
@@ -26,29 +26,32 @@ const LostFoundAI2 = () => {
     { id: 3, message: 'Someone messaged you about your found item', type: 'message', read: false }
   ]);
 
-  
-
   const Sidebar = () => (
-    <div className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} ${colorClasses.background} border-r border-orange-200 h-screen overflow-y-auto transition-all duration-300 ease-in-out`}>
-      <div className="p-4">
-        <div className={`flex items-center gap-2 mb-8 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-          <div className={`w-10 h-10 ${colorClasses.primary} rounded-lg flex items-center justify-center`}>
-            <Search className="text-white" size={24} />
-          </div>
-          {!isSidebarCollapsed && (
-            <div>
-              <h1 className={`text-xl font-bold ${colorClasses.textPrimary}`}>LostFound AI</h1>
-              <p className={`text-xs ${colorClasses.textSecondary}`}>Find with Intelligence</p>
-            </div>
-          )}
-        </div>
-        
+    <div className={`
+      fixed md:static z-50 top-0 left-0 h-full 
+      ${isSidebarCollapsed ? '-translate-x-full' : 'translate-x-0'} 
+      md:translate-x-0 transition-transform duration-300 ease-in-out
+      ${isSidebarCollapsed ? 'w-64' : 'w-64'} 
+      ${colorClasses.background} border-r border-orange-200 overflow-y-auto
+    `}>
+      <div className="p-4 pt-16 md:pt-4">
+        <div className="flex items-center gap-2 mb-8">
+  <div className={`w-10 h-10 ${colorClasses.primary} rounded-lg flex items-center justify-center`}>
+    <Search className="text-white" size={24} />
+  </div>
+  <div className={`${isSidebarCollapsed ? 'hidden' : 'block'} md:block`}>
+    <h1 className={`text-xl font-bold ${colorClasses.textPrimary}`}>LostFound AI</h1>
+    <p className={`text-xs ${colorClasses.textSecondary}`}>Find with Intelligence</p>
+  </div>
+</div>
+
+
         <nav className="space-y-5">
           {[
             { key: 'dashboard', icon: <Home size={30} />, label: 'Dashboard' },
             { key: 'profile', icon: <User size={30} />, label: 'Profile' },
             { key: 'chat', icon: <MessageCircle size={30} />, label: 'Messages' },
-            { key: 'notifications', icon: <Bell size={30} />, label: 'Notifications' }, 
+            { key: 'notifications', icon: <Bell size={30} />, label: 'Notifications' },
             { key: 'leaderboard', icon: <Trophy size={30} />, label: 'Leaderboard' },
             { key: 'analytics', icon: <BarChart3 size={30} />, label: 'Analytics' },
             { key: 'qr', icon: <QrCode size={30} />, label: 'QR Codes' },
@@ -56,55 +59,36 @@ const LostFoundAI2 = () => {
           ].map(({ key, icon, label }) => (
             <div key={key} className="relative group">
               <button
-                onClick={() => setCurrentPage(key)}
-                className={`w-full text-left ${isSidebarCollapsed ? 'px-2 justify-center' : 'px-4'} py-2 rounded-lg flex items-center ${isSidebarCollapsed ? 'gap-0' : 'gap-3'} transition-all duration-200 relative ${
+                onClick={() => {
+                  setCurrentPage(key);
+                  setIsSidebarCollapsed(true); // close drawer on mobile
+                }}
+                className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 transition-all duration-200 relative ${
                   currentPage === key
                     ? `${colorClasses.primary} text-white shadow`
                     : `${colorClasses.textSecondary} hover:bg-orange-100`
                 }`}
               >
-                <div className={isSidebarCollapsed ? 'flex-shrink-0' : ''}>
-                  {icon}
-                </div>
-                {!isSidebarCollapsed && (
-                  <>
-                    <span className="text-lg">{label}</span>
-                    {key === 'chat' && notifications.filter(n => !n.read).length > 0 && (
-                      <span className={`px-2 py-1 ${colorClasses.warning} text-white text-xs rounded-full ml-auto`}>
-                        {notifications.filter(n => !n.read).length}
-                      </span>
-                    )}
-                  </>
-                )}
-                {isSidebarCollapsed && key === 'chat' && notifications.filter(n => !n.read).length > 0 && (
-                  <span className={`absolute -top-1 -right-1 w-5 h-5 ${colorClasses.warning} text-white text-xs rounded-full flex items-center justify-center`}>
+                {icon}
+                <span className="text-base">{label}</span>
+                {key === 'chat' && notifications.filter(n => !n.read).length > 0 && (
+                  <span className={`px-2 py-1 ${colorClasses.warning} text-white text-xs rounded-full ml-auto`}>
                     {notifications.filter(n => !n.read).length}
                   </span>
                 )}
               </button>
-            
             </div>
           ))}
         </nav>
-        
+
         <div className="mt-8 pt-4 border-t border-orange-200">
           <div className="relative group">
             <button
-              className={`w-full text-left ${isSidebarCollapsed ? 'px-2 justify-center' : 'px-4'} py-2 rounded-lg flex items-center ${isSidebarCollapsed ? 'gap-0' : 'gap-3'} transition-colors ${colorClasses.textSecondary} hover:bg-red-100 hover:text-red-600`}
+              className="w-full px-4 py-2 text-left rounded-lg flex items-center gap-3 transition-colors text-red-500 hover:bg-red-100"
             >
-              <div className={isSidebarCollapsed ? 'flex-shrink-0' : ''}>
-                <LogOut size={20} />
-              </div>
-              {!isSidebarCollapsed && <span>Logout</span>}
+              <LogOut size={20} />
+              <span>Logout</span>
             </button>
-            
-            {/* Tooltip for logout when collapsed */}
-            {isSidebarCollapsed && (
-              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                Logout
-                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -112,20 +96,22 @@ const LostFoundAI2 = () => {
   );
 
   const Header = () => (
-    <div className="bg-white border-b border-orange-200 px-6 py-4">
+    <div className="bg-white border-b border-orange-200 px-4 md:px-6 py-2 md:py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-2 hover:bg-orange-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-orange-100 rounded-lg transition-colors md:hidden"
           >
             <Menu size={20} className={colorClasses.textSecondary} />
           </button>
-          <h2 className={`text-2xl font-bold ${colorClasses.textPrimary}`}>
-            {currentPage === 'dashboard' ? 'Dashboard Overview' : currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}
+          <h2 className={`text-lg md:text-2xl font-bold ${colorClasses.textPrimary}`}>
+            {currentPage === 'dashboard'
+              ? 'Dashboard Overview'
+              : currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}
           </h2>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <button
             className="relative p-2 hover:bg-orange-100 rounded-full transition-colors"
@@ -142,7 +128,7 @@ const LostFoundAI2 = () => {
             <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
               <User className="text-white" size={16} />
             </div>
-            <div>
+            <div className="hidden sm:block">
               <div className={`text-sm font-medium ${colorClasses.textPrimary}`}>
                 {user?.name || 'Guest'}
               </div>
@@ -161,7 +147,7 @@ const LostFoundAI2 = () => {
       case 'dashboard': return <Dashboard />;
       case 'profile': return <Profile />;
       case 'chat': return <Chat />;
-      case 'notifications': return <NotificationPage notifications={notifications} />; 
+      case 'notifications': return <NotificationPage notifications={notifications} />;
       case 'leaderboard': return <Leaderboard />;
       case 'analytics': return <Analytics />;
       case 'qr': return <QRCode />;
@@ -173,26 +159,33 @@ const LostFoundAI2 = () => {
   const RenderedPage = useMemo(() => renderPage(), [currentPage]);
 
   return (
-    <div className={`min-h-screen ${colorClasses.background} flex`}>
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Header />
-        <main className="flex-1 p-6 overflow-y-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPage}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              {RenderedPage}
-            </motion.div>
-          </AnimatePresence>
-        </main>
+    <>
+      <div className="min-h-screen flex flex-col md:flex-row">
+        <Sidebar />
+        {!isSidebarCollapsed && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
+            onClick={() => setIsSidebarCollapsed(true)}
+          />
+        )}
+        <div className="flex-1 flex flex-col">
+          <Header />
+          <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentPage}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                {RenderedPage}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
       </div>
-
-    </div>
+    </>
   );
 };
 
