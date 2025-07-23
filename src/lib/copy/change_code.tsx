@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  Search, Bell, User, Trophy, MessageCircle, Home, BarChart3, LogOut, QrCode, Settings
+  Search, Bell, User, Trophy, MessageCircle, Home, BarChart3, LogOut, QrCode, Settings, Menu
 } from 'lucide-react';
 import Chat from '../Chat';
 import Analytics from '../Analytics';
@@ -15,6 +15,7 @@ import NotificationPage from '../Notification';
 
 const LostFoundAI2 = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   type User = { name: string; rank?: string } | null;
   const [user, setUser] = useState<User>(null);
   const [setIsLoggedIn] = useState(false);
@@ -51,54 +52,83 @@ const LostFoundAI2 = () => {
   );
 
   const Sidebar = () => (
-    <div className={`w-64 ${colorClasses.background} border-r border-orange-200 h-screen overflow-y-auto`}>
+    <div className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} ${colorClasses.background} border-r border-orange-200 h-screen overflow-y-auto transition-all duration-300 ease-in-out`}>
       <div className="p-4">
-        <div className="flex items-center gap-2 mb-8">
+        <div className={`flex items-center gap-2 mb-8 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
           <div className={`w-10 h-10 ${colorClasses.primary} rounded-lg flex items-center justify-center`}>
             <Search className="text-white" size={24} />
           </div>
-          <div>
-            <h1 className={`text-xl font-bold ${colorClasses.textPrimary}`}>LostFound AI</h1>
-            <p className={`text-xs ${colorClasses.textSecondary}`}>Find with Intelligence</p>
-          </div>
+          {!isSidebarCollapsed && (
+            <div>
+              <h1 className={`text-xl font-bold ${colorClasses.textPrimary}`}>LostFound AI</h1>
+              <p className={`text-xs ${colorClasses.textSecondary}`}>Find with Intelligence</p>
+            </div>
+          )}
         </div>
-        <nav className="space-y-2">
+        
+        <nav className="space-y-5">
           {[
-            { key: 'dashboard', icon: <Home size={20} />, label: 'Dashboard' },
-            { key: 'profile', icon: <User size={20} />, label: 'Profile' },
-            { key: 'chat', icon: <MessageCircle size={20} />, label: 'Messages' },
-            { key: 'notifications', icon: <Bell size={20} />, label: 'Notifications' }, // ✅ Added
-            { key: 'leaderboard', icon: <Trophy size={20} />, label: 'Leaderboard' },
-            { key: 'analytics', icon: <BarChart3 size={20} />, label: 'Analytics' },
-            { key: 'qr', icon: <QrCode size={20} />, label: 'QR Codes' },
-            { key: 'settings', icon: <Settings size={20} />, label: 'Settings' }
+            { key: 'dashboard', icon: <Home size={30} />, label: 'Dashboard' },
+            { key: 'profile', icon: <User size={30} />, label: 'Profile' },
+            { key: 'chat', icon: <MessageCircle size={30} />, label: 'Messages' },
+            { key: 'notifications', icon: <Bell size={30} />, label: 'Notifications' }, 
+            { key: 'leaderboard', icon: <Trophy size={30} />, label: 'Leaderboard' },
+            { key: 'analytics', icon: <BarChart3 size={30} />, label: 'Analytics' },
+            { key: 'qr', icon: <QrCode size={30} />, label: 'QR Codes' },
+            { key: 'settings', icon: <Settings size={30} />, label: 'Settings' }
           ].map(({ key, icon, label }) => (
-            <button
-              key={key}
-              onClick={() => setCurrentPage(key)}
-              className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 transition-all duration-200 ${
-                currentPage === key
-                  ? `${colorClasses.primary} text-white shadow`
-                  : `${colorClasses.textSecondary} hover:bg-orange-100`
-              }`}
-            >
-              {icon}
-              {label}
-              {key === 'chat' && notifications.filter(n => !n.read).length > 0 && (
-                <span className={`px-2 py-1 ${colorClasses.warning} text-white text-xs rounded-full`}>
-                  {notifications.filter(n => !n.read).length}
-                </span>
-              )}
-            </button>
+            <div key={key} className="relative group">
+              <button
+                onClick={() => setCurrentPage(key)}
+                className={`w-full text-left ${isSidebarCollapsed ? 'px-2 justify-center' : 'px-4'} py-2 rounded-lg flex items-center ${isSidebarCollapsed ? 'gap-0' : 'gap-3'} transition-all duration-200 relative ${
+                  currentPage === key
+                    ? `${colorClasses.primary} text-white shadow`
+                    : `${colorClasses.textSecondary} hover:bg-orange-100`
+                }`}
+              >
+                <div className={isSidebarCollapsed ? 'flex-shrink-0' : ''}>
+                  {icon}
+                </div>
+                {!isSidebarCollapsed && (
+                  <>
+                    <span className="text-lg">{label}</span>
+                    {key === 'chat' && notifications.filter(n => !n.read).length > 0 && (
+                      <span className={`px-2 py-1 ${colorClasses.warning} text-white text-xs rounded-full ml-auto`}>
+                        {notifications.filter(n => !n.read).length}
+                      </span>
+                    )}
+                  </>
+                )}
+                {isSidebarCollapsed && key === 'chat' && notifications.filter(n => !n.read).length > 0 && (
+                  <span className={`absolute -top-1 -right-1 w-5 h-5 ${colorClasses.warning} text-white text-xs rounded-full flex items-center justify-center`}>
+                    {notifications.filter(n => !n.read).length}
+                  </span>
+                )}
+              </button>
+            
+            </div>
           ))}
         </nav>
+        
         <div className="mt-8 pt-4 border-t border-orange-200">
-          <button
-            className={`w-full text-left px-4 py-2 rounded-lg flex items-center gap-3 transition-colors ${colorClasses.textSecondary} hover:bg-red-100 hover:text-red-600`}
-          >
-            <LogOut size={20} />
-            Logout
-          </button>
+          <div className="relative group">
+            <button
+              className={`w-full text-left ${isSidebarCollapsed ? 'px-2 justify-center' : 'px-4'} py-2 rounded-lg flex items-center ${isSidebarCollapsed ? 'gap-0' : 'gap-3'} transition-colors ${colorClasses.textSecondary} hover:bg-red-100 hover:text-red-600`}
+            >
+              <div className={isSidebarCollapsed ? 'flex-shrink-0' : ''}>
+                <LogOut size={20} />
+              </div>
+              {!isSidebarCollapsed && <span>Logout</span>}
+            </button>
+            
+            {/* Tooltip for logout when collapsed */}
+            {isSidebarCollapsed && (
+              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                Logout
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-800 rotate-45"></div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -107,13 +137,22 @@ const LostFoundAI2 = () => {
   const Header = () => (
     <div className="bg-white border-b border-orange-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        <h2 className={`text-2xl font-bold ${colorClasses.textPrimary}`}>
-          {currentPage === 'dashboard' ? 'Dashboard Overview' : currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}
-        </h2>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="p-2 hover:bg-orange-100 rounded-lg transition-colors"
+          >
+            <Menu size={20} className={colorClasses.textSecondary} />
+          </button>
+          <h2 className={`text-2xl font-bold ${colorClasses.textPrimary}`}>
+            {currentPage === 'dashboard' ? 'Dashboard Overview' : currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}
+          </h2>
+        </div>
+        
         <div className="flex items-center gap-4">
           <button
             className="relative p-2 hover:bg-orange-100 rounded-full transition-colors"
-            onClick={() => setCurrentPage('notifications')} // ✅ Clickable bell
+            onClick={() => setCurrentPage('notifications')}
           >
             <Bell size={20} className={colorClasses.textSecondary} />
             {notifications.filter(n => !n.read).length > 0 && (
