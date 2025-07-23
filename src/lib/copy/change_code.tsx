@@ -19,7 +19,6 @@ const LostFoundAI2 = () => {
   type User = { name: string; rank?: string } | null;
   const [user, setUser] = useState<User>(null);
   const [setIsLoggedIn] = useState(false);
-  const [showPostModal, setShowPostModal] = useState(false);
   const [] = useState('');
   const [notifications] = useState([
     { id: 1, message: 'New match found for your lost item!', type: 'match', read: false },
@@ -27,29 +26,7 @@ const LostFoundAI2 = () => {
     { id: 3, message: 'Someone messaged you about your found item', type: 'message', read: false }
   ]);
 
-  const PostItemModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg space-y-4">
-        <h2 className="text-xl font-semibold text-center text-[#7B3F00]">Post New Item</h2>
-        <div className="space-y-4">
-          <input type="text" placeholder="Item Name" className="w-full border rounded p-2" />
-          <select className="w-full border rounded p-2">
-            <option value="lost">Lost</option>
-            <option value="found">Found</option>
-          </select>
-          <textarea placeholder="Description" className="w-full border rounded p-2" rows={3} />
-        </div>
-        <div className="flex justify-end">
-          <button
-            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
-            onClick={() => setShowPostModal(false)}
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  
 
   const Sidebar = () => (
     <div className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} ${colorClasses.background} border-r border-orange-200 h-screen overflow-y-auto transition-all duration-300 ease-in-out`}>
@@ -215,7 +192,6 @@ const LostFoundAI2 = () => {
         </main>
       </div>
 
-      {showPostModal && <PostItemModal />}
     </div>
   );
 };

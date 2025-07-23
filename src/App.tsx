@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoadingPage from './lib/startingPage/loadingPage';
-import LostFoundAI from './lib/copy/Fullcode';
+// import LostFoundAI from './lib/copy/Fullcode';
 import AuthPage from './lib/startingPage/LoginPage';
 import Dashboard from './lib/Dashboard';
 import ReportItemPage from './lib/ReportItemPage';
@@ -22,7 +22,6 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/report-item" element={<ReportItemPage />} />
-        <Route path="/1" element={<LostFoundAI />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/qr_code" element={<QRCode />} />
         <Route path="/profile" element={ <Profile/>} />
@@ -37,6 +36,8 @@ function App() {
         {/* Add more routes as needed */}
 
         <Route path="/2" element={<LostFoundAI2 />} />
+        {/* <Route path="/1" element={<LostFoundAI />} /> */}
+
 
       </Routes>
     </Router>
