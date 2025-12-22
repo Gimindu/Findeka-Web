@@ -13,6 +13,7 @@ import Analytics from './lib/Analytics';
 import PostItemModal from './lib/AddPost';
 import SettingPage from './lib/Setting';
 import NotificationPage from './lib/Notification';
+import ImageMatchingDemo from './lib/Cnn_module';
 
 function App() {
   return (
@@ -36,6 +37,8 @@ function App() {
         {/* Add more routes as needed */}
 
         <Route path="/2" element={<LostFoundAI2 />} />
+        <Route path="/3" element={<ImageMatchingDemo />} />
+
         {/* <Route path="/1" element={<LostFoundAI />} /> */}
 
 
