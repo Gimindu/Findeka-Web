@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { Bell, User } from "lucide-react";
 import { Button } from "../ui/button";
+import { Link } from "react-router-dom";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -20,11 +21,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
            </h2>
 
            <div className="flex items-center gap-4">
+            <Link to="/notifications">
               <Button size="icon" variant="ghost" className="rounded-full relative">
                  <Bell className="h-5 w-5 text-slate-600" />
                  <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white"></span>
               </Button>
+            </Link>
               <div className="h-8 w-[1px] bg-slate-200 mx-1"></div>
+              <Link to="/profile">
               <div className="flex items-center gap-3">
                   <div className="text-right hidden sm:block">
                       <p className="text-sm font-medium text-slate-900">Gimindu</p>
@@ -34,6 +38,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <User className="h-full w-full p-1 text-slate-400" />
                   </div>
               </div>
+              </Link>
            </div>
         </header>
         
