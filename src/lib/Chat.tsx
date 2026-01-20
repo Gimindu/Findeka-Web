@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Send, User, QrCode } from 'lucide-react'; // Ensure icons are imported
+import  { useState } from 'react';
+import { Send, User } from 'lucide-react'; // Ensure icons are imported
 import colorClasses from '@/styles/colors'; // Make sure this file exists and contains the color classes you need
 
 const Chat = () => {

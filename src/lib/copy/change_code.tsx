@@ -17,9 +17,9 @@ const LostFoundAI2 = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true); // collapsed by default for mobile
   type User = { name: string; rank?: string } | null;
-  const [user, setUser] = useState<User>(null);
-  const [setIsLoggedIn] = useState(false);
-  const [] = useState('');
+  const [user] = useState<User>(null);
+
+
   const [notifications] = useState([
     { id: 1, message: 'New match found for your lost item!', type: 'match', read: false },
     { id: 2, message: 'Someone messaged you about your found item', type: 'message', read: false },

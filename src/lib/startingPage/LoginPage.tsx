@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Eye, EyeOff, User, Mail, Lock, Search, MapPin } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Lock, Search } from 'lucide-react';
 import colorClasses from '@/styles/colors';
+import { Link } from 'react-router-dom';
 
 
 
@@ -221,14 +222,15 @@ export default function AuthPage() {
                 </a>
               </div>
             )}
-
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className={`w-full ${colorClasses.primary} ${colorClasses.primaryHover} font-medium py-3 rounded-lg transition-colors`}
-            >
-              {activeTab === 'login' ? 'Sign In' : 'Create Account'}
-            </button>
+            <Link to="/2">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className={`w-full ${colorClasses.primary} ${colorClasses.primaryHover} font-medium py-3 rounded-lg transition-colors`}
+              >
+                {activeTab === 'login' ? 'Sign In' : 'Create Account'}
+              </button>
+            </Link>
           </div>
 
           {/* Divider */}
