@@ -4,8 +4,6 @@ import {
   Search, 
   MessageSquare, 
   Trophy, 
-  BarChart2, 
-  QrCode, 
   Settings, 
   LogOut,
   PlusCircle
@@ -19,8 +17,6 @@ const sidebarItems = [
   { icon: Search, label: "Search & Match", href: "/search" },
   { icon: MessageSquare, label: "Messages", href: "/chat" },
   { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
-  { icon: BarChart2, label: "Analytics", href: "/analytics" },
-  { icon: QrCode, label: "QR Codes", href: "/qr-code" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 

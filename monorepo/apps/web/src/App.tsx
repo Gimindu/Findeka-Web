@@ -6,10 +6,8 @@ import Dashboard from './pages/dashboard/DashboardPage';
 import ReportItemPage from './pages/report/ReportItemPage';
 // import LostFoundAI2 from './lib/copy/change_code';
 import Chat from './pages/chat/ChatPage';
-import QRCode from './lib/QrCode';
 import Profile from './lib/Profile';
 import Leaderboard from './lib/LeaderBoard';
-import Analytics from './lib/Analytics';
 import PostItemModal from './lib/AddPost';
 import SettingPage from './lib/Setting';
 import NotificationPage from './lib/Notification';
@@ -24,11 +22,9 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/report-item" element={<ReportItemPage />} />
         <Route path="/chat" element={<Chat />} />
-        <Route path="/qr_code" element={<QRCode />} />
         <Route path="/profile" element={ <Profile/>} />
         <Route path="/settings" element={<SettingPage />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/analytics" element={<Analytics />} />
         <Route path="/add-post" element={<PostItemModal />} />
         <Route path="/notifications" element={<NotificationPage notifications={[]} />} />
         {/* <Route path="/add-post" element={<Sidebar />} /> */}
