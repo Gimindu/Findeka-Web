@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Eye, EyeOff, User, Mail, Lock, Search } from 'lucide-react';
 import colorClasses from '@/styles/colors';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 
 
 export default function AuthPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -29,6 +30,7 @@ export default function AuthPage() {
     e.preventDefault();
     if (activeTab === 'login') {
       console.log('Login attempt:', { email: formData.email, password: formData.password });
+      navigate('/2');
     } else {
       console.log('Signup attempt:', formData);
     }
@@ -222,15 +224,13 @@ export default function AuthPage() {
                 </a>
               </div>
             )}
-            <Link to="/2">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className={`w-full ${colorClasses.primary} ${colorClasses.primaryHover} font-medium py-3 rounded-lg transition-colors`}
-              >
-                {activeTab === 'login' ? 'Sign In' : 'Create Account'}
-              </button>
-            </Link>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className={`w-full ${colorClasses.primary} ${colorClasses.primaryHover} font-medium py-3 rounded-lg transition-colors`}
+            >
+              {activeTab === 'login' ? 'Sign In' : 'Create Account'}
+            </button>
           </div>
 
           {/* Divider */}
