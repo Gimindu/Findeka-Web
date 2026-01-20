@@ -1,11 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoadingPage from './lib/startingPage/loadingPage';
 // import LostFoundAI from './lib/copy/Fullcode';
-import AuthPage from './lib/startingPage/LoginPage';
-import Dashboard from './lib/Dashboard';
-import ReportItemPage from './lib/ReportItemPage';
-import LostFoundAI2 from './lib/copy/change_code';
-import Chat from './lib/Chat';
+import AuthPage from './pages/auth/AuthPage';
+import Dashboard from './pages/dashboard/DashboardPage';
+import ReportItemPage from './pages/report/ReportItemPage';
+// import LostFoundAI2 from './lib/copy/change_code';
+import Chat from './pages/chat/ChatPage';
 import QRCode from './lib/QrCode';
 import Profile from './lib/Profile';
 import Leaderboard from './lib/LeaderBoard';
@@ -36,7 +36,7 @@ function App() {
         
         {/* Add more routes as needed */}
 
-        <Route path="/2" element={<LostFoundAI2 />} />
+        {/* Add more routes as needed */}
         <Route path="/3" element={<ImageMatchingDemo />} />
 
         {/* <Route path="/1" element={<LostFoundAI />} /> */}

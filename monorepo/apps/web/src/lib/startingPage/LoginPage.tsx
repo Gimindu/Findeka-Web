@@ -216,7 +216,7 @@ export default function AuthPage() {
                     className="w-4 h-4 text-[#DD6B20] border-gray-300 rounded focus:ring-[#DD6B20]"
                   />
                   <span className={`ml-2 text-sm ${colorClasses.textSecondary}`}>
-                    Remember me
+                    Remember medsda
                   </span>
                 </label>
                 <a href="#" className={`text-sm ${colorClasses.textSecondary} hover:text-[#7B3F00]`}>
@@ -224,6 +224,14 @@ export default function AuthPage() {
                 </a>
               </div>
             )}
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className={`w-full ${colorClasses.primary} ${colorClasses.primaryHover} font-medium py-3 rounded-lg transition-colors`}
+            >
+              {activeTab === 'login' ? 'Sign In' : 'Create Account'}
+            </button>
+
             <button
               type="button"
               onClick={handleSubmit}
