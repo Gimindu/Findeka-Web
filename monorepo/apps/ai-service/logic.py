@@ -81,8 +81,15 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
     # --- STAGE 2: NEURAL RANKING ---
     q_quality = get_image_quality(query_img_path)
     t_quality = get_image_quality(target_img_path)
-    is_blurry = q_quality < 100 or t_quality < 100
-    w_img, w_txt = (0.20, 0.80) if is_blurry else (0.50, 0.50)
+    # Check if we actually HAVE an image (quality != 500 default or path check)
+    has_q_img = query_img_path and os.path.exists(query_img_path)
+    
+    if not has_q_img:
+        # If no query image, Text is 100% of the base score
+        w_img, w_txt = (0.0, 1.0)
+    else:
+        is_blurry = q_quality < 100 or t_quality < 100
+        w_img, w_txt = (0.20, 0.80) if is_blurry else (0.50, 0.50)
 
     # Multiplier for subcategory match
     q_sub = query_item.get('subcategory', '').lower()
@@ -119,7 +126,16 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
     # Fuzzy Text
     name_fuzzy = fuzz.ratio(query_item.get('name','').lower(), target_item.get('name', '').lower()) / 100.0
     desc_fuzzy = fuzz.partial_ratio(query_item.get('description','').lower(), target_item.get('description', '').lower()) / 100.0
-    text_logic_score = (s_tt * 0.7) + (name_fuzzy * 0.2) + (desc_fuzzy * 0.1)
+    
+    # Check if BERT loaded
+    if query_feats['bert'] is not None:
+         # Reduced name weight from 0.2 to 0.1, increased desc to 0.2
+         text_logic_score = (s_tt * 0.7) + (name_fuzzy * 0.1) + (desc_fuzzy * 0.2)
+    else:
+         # Fallback: Rely 100% on Fuzzy Match if BERT missing
+         print("⚠️ BERT missing, using fuzzy fallback")
+         # Reduced name weight from 0.6 to 0.2, increased desc to 0.8
+         text_logic_score = (name_fuzzy * 0.2) + (desc_fuzzy * 0.8)
 
     # Base Score
     base_score = (max(s_ii, s_ti) * w_img + text_logic_score * w_txt) * multiplier
