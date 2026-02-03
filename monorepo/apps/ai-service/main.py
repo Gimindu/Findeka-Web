@@ -82,7 +82,16 @@ def get_image_url(image_path: str) -> Optional[str]:
 
 @app.get("/")
 def read_root():
-    return {"status": "online", "message": "Findeka AI Service is running"}
+    return {
+        "status": "online", 
+        "message": "Findeka AI Service is running",
+        "models": {
+            "bert": model_manager.bert_model is not None,
+            "clip": model_manager.clip_model is not None,
+            "mobilenet": model_manager.mobilenet_model is not None,
+            "ocr": model_manager.ocr_reader is not None
+        }
+    }
 
 @app.post("/search")
 async def search_items(
