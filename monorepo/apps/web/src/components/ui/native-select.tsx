@@ -17,7 +17,7 @@ const NativeSelect = React.forwardRef<HTMLSelectElement, NativeSelectProps>(
         )}
         <select
           className={cn(
-            "flex h-10 w-full appearance-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DD6B20] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-950 dark:ring-offset-slate-950 focus:border-transparent transition-all",
+            "flex h-10 w-full appearance-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DD6B20] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus:border-slate-300 transition-all text-slate-900",
             icon ? "pl-10" : "",
             className
           )}

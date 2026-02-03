@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Bell, Lock, User, Shield, LogOut } from "lucide-react";
+import { Bell, User, Shield, LogOut } from "lucide-react";
 
 export default function SettingsPage() {
   return (

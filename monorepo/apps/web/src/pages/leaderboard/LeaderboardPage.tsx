@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NativeSelect } from "@/components/ui/native-select";
-import { Trophy, Medal, Award, Crown } from "lucide-react";
+import { Trophy, Medal, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const leaderboardData = [
@@ -99,7 +99,7 @@ export default function LeaderboardPage() {
              </div>
           </CardHeader>
           <CardContent className="p-0">
-            {leaderboardData.map((user, index) => (
+            {leaderboardData.map((user) => (
               <div 
                 key={user.rank} 
                 className={cn(

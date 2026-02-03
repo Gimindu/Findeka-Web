@@ -10,11 +10,11 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <Sidebar />
       <div className="p-4 sm:ml-64">
         {/* Header */}
-        <header className="mb-6 flex items-center justify-between rounded-xl bg-white/50 p-4 shadow-sm backdrop-blur-xl border border-white/20">
+        <header className="mb-6 flex items-center justify-between rounded-xl bg-white/80 p-4 shadow-sm backdrop-blur-xl border border-white/20">
            
            <h2 className="text-xl font-semibold text-slate-800">
              Overview
@@ -22,7 +22,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
            <div className="flex items-center gap-4">
             <Link to="/notifications">
-              <Button size="icon" variant="ghost" className="rounded-full relative">
+              <Button size="icon" variant="ghost" className="rounded-full relative hover:bg-slate-100">
                  <Bell className="h-5 w-5 text-slate-600" />
                  <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white"></span>
               </Button>
@@ -35,7 +35,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <p className="text-xs text-slate-500">Premium Member</p>
                   </div>
                   <div className="h-10 w-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
-                      <User className="h-full w-full p-1 text-slate-400" />
+                      <User className="h-full w-full p-1 text-slate-500" />
                   </div>
               </div>
               </Link>

@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
-import { Bell, Check, Info, AlertTriangle, Search, Package } from "lucide-react";
+import { Check, Info, AlertTriangle, Search, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const notifications = [

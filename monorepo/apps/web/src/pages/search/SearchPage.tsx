@@ -114,7 +114,7 @@ export default function SearchPage() {
             <Button 
                 variant="outline" 
                 onClick={() => setShowFilters(!showFilters)}
-                className={`gap-2 ${showFilters ? 'bg-orange-50 border-orange-200 text-orange-600' : ''}`}
+                className={`gap-2 ${showFilters ? 'bg-orange-50 border-orange-200 text-orange-600' : 'bg-white border-slate-200 text-slate-600'}`}
             >
                 <Filter className="h-4 w-4" />
                 Wait Filters
@@ -122,12 +122,12 @@ export default function SearchPage() {
         </div>
 
         {/* Search & Filters Area */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-4">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input 
                     placeholder="Search by keyword, location, or description..." 
-                    className="pl-10 h-12 text-lg bg-slate-50 border-slate-200 focus-visible:ring-orange-500"
+                    className="pl-10 h-12 text-lg bg-slate-50 border-slate-200 focus-visible:ring-orange-500 text-slate-900 placeholder-slate-400"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                 />
@@ -141,9 +141,9 @@ export default function SearchPage() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                     >
-                        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="pt-4 border-t border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Category</label>
+                                <label className="text-sm font-medium text-slate-300">Category</label>
                                 <div className="flex flex-wrap gap-2">
                                     {CATEGORIES.map(cat => (
                                         <button
@@ -151,7 +151,7 @@ export default function SearchPage() {
                                             onClick={() => setSelectedCategory(cat)}
                                             className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
                                                 selectedCategory === cat 
-                                                ? 'bg-slate-900 text-white' 
+                                                ? 'bg-orange-600 text-white' 
                                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                             }`}
                                         >
@@ -169,7 +169,7 @@ export default function SearchPage() {
                                             onClick={() => setSelectedType(type)}
                                             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                                                 selectedType === type 
-                                                ? type === 'Lost' ? 'bg-red-500 text-white' : type === 'Found' ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white'
+                                                ? type === 'Lost' ? 'bg-red-600 text-white' : type === 'Found' ? 'bg-emerald-600 text-white' : 'bg-orange-600 text-white'
                                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                             }`}
                                         >
@@ -194,7 +194,7 @@ export default function SearchPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <Card className="h-full border-none shadow-sm hover:shadow-md transition-shadow group overflow-hidden bg-white">
+                        <Card className="h-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow group overflow-hidden bg-white">
                             <div className="relative aspect-video overflow-hidden">
                                 <img 
                                     src={item.image} 
@@ -214,10 +214,10 @@ export default function SearchPage() {
                             <CardContent className="p-4 flex flex-col gap-3">
                                 <div>
                                     <div className="flex justify-between items-start mb-1">
-                                        <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
+                                        <span className="text-xs font-medium text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-md">
                                             {item.category}
                                         </span>
-                                        <span className="text-xs text-slate-400 flex items-center">
+                                        <span className="text-xs text-slate-500 flex items-center">
                                             <Clock className="w-3 h-3 mr-1" />
                                             {item.status}
                                         </span>
@@ -227,11 +227,11 @@ export default function SearchPage() {
                                     </h3>
                                 </div>
                                 
-                                <p className="text-slate-500 text-sm line-clamp-2 min-h-[2.5rem]">
+                                        <p className="text-slate-600 text-sm line-clamp-2 min-h-[2.5rem]">
                                     {item.description}
                                 </p>
 
-                                <div className="pt-3 mt-auto border-t border-slate-50 space-y-2">
+                                <div className="pt-3 mt-auto border-t border-slate-100 space-y-2">
                                     <div className="flex items-center text-xs text-slate-500">
                                         <MapPin className="w-3.5 h-3.5 mr-1.5 text-slate-400 shrink-0" />
                                         <span className="truncate">{item.location}</span>
@@ -242,7 +242,7 @@ export default function SearchPage() {
                                     </div>
                                 </div>
 
-                                <Button className="w-full mt-2 bg-slate-900 text-white hover:bg-slate-800">
+                                <Button className="w-full mt-2 bg-slate-100 text-slate-900 hover:bg-slate-200">
                                     View Details
                                 </Button>
                             </CardContent>

@@ -24,13 +24,13 @@ export function Sidebar() {
   const location = useLocation();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white/50 backdrop-blur-xl transition-transform dark:border-slate-800 dark:bg-slate-950/50">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white/80 backdrop-blur-xl transition-transform">
       <div className="flex h-full flex-col px-3 py-4">
         <div className="mb-10 flex items-center pl-3">
           <div className="flex bg-[#DD6B20] p-2 rounded-lg mr-3 shadow-lg shadow-orange-500/20">
              <Search className="h-6 w-6 text-white" />
           </div>
-          <span className="self-center text-xl font-bold whitespace-nowrap dark:text-white">
+          <span className="self-center text-xl font-bold whitespace-nowrap">
             Findeka
           </span>
         </div>
@@ -46,13 +46,13 @@ export function Sidebar() {
                     "relative flex items-center rounded-lg p-3 group transition-colors",
                     isActive 
                       ? "text-[#DD6B20]" 
-                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/50"
                   )}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="activeSidebar"
-                      className="absolute inset-0 bg-orange-50 dark:bg-orange-500/10 rounded-lg"
+                      className="absolute inset-0 bg-orange-500/10 rounded-lg"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -71,7 +71,7 @@ export function Sidebar() {
           })}
         </ul>
 
-        <div className="mt-auto border-t border-slate-100 pt-4 dark:border-slate-800">
+        <div className="mt-auto border-t border-slate-200 pt-4">
            <button className="flex w-full items-center rounded-lg p-3 text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors group">
               <LogOut className="h-5 w-5 flex-shrink-0 text-slate-500 group-hover:text-red-600 transition-colors" />
               <span className="ml-3">Sign Out</span>

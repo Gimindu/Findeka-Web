@@ -30,14 +30,14 @@ export default function ChatPage() {
     <DashboardLayout>
       <div className="flex h-[calc(100vh-8rem)] gap-6">
         {/* Sidebar List (Conversations) */}
-        <Card className="w-80 hidden md:flex flex-col border-none shadow-sm h-full bg-white">
-            <div className="p-4 border-b border-slate-100">
+        <Card className="w-80 hidden md:flex flex-col border-none shadow-sm h-full bg-white border-r">
+            <div className="p-4 border-b border-slate-200">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input 
                         type="text" 
                         placeholder="Search messages..." 
-                        className="w-full pl-9 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#DD6B20]/20"
+                        className="w-full pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#DD6B20]/20 text-slate-900 placeholder-slate-500"
                     />
                 </div>
             </div>
@@ -53,12 +53,12 @@ export default function ChatPage() {
                         <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-baseline mb-0.5">
                                 <h4 className="text-sm font-semibold text-slate-900 truncate">Jane Smith</h4>
-                                <span className="text-xs text-orange-600 font-medium">2:35 PM</span>
+                                <span className="text-xs text-orange-500 font-medium">2:35 PM</span>
                             </div>
-                            <p className="text-xs text-slate-500 truncate">Yes, it does! Where would...</p>
+                            <p className="text-xs text-slate-600 truncate">Yes, it does! Where would...</p>
                         </div>
                     </div>
-                     {/* Placeholder Chats */}
+                    {/* Placeholder Chats */}
                     {[1, 2, 3].map(i => (
                         <div key={i} className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors">
                             <div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center">
@@ -66,8 +66,8 @@ export default function ChatPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-baseline mb-0.5">
-                                    <h4 className="text-sm font-semibold text-slate-900 truncate">User {i}</h4>
-                                    <span className="text-xs text-slate-400">Yesterday</span>
+                                    <h4 className="text-sm font-semibold text-slate-700 truncate">User {i}</h4>
+                                    <span className="text-xs text-slate-500">Yesterday</span>
                                 </div>
                                 <p className="text-xs text-slate-500 truncate">Is this still available?</p>
                             </div>
@@ -78,9 +78,9 @@ export default function ChatPage() {
         </Card>
 
         {/* Chat Area */}
-        <Card className="flex-1 flex flex-col border-none shadow-sm h-full bg-white overflow-hidden">
+        <Card className="flex-1 flex flex-col border-none shadow-sm h-full bg-slate-50">
             {/* Chat Header */}
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white z-10">
+            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white/80 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
                      <div className="h-10 w-10 bg-slate-200 rounded-full overflow-hidden">
                         <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=2574&auto=format&fit=crop" alt="Jane" className="h-full w-full object-cover" />
@@ -107,7 +107,7 @@ export default function ChatPage() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
                 {messages.map((msg) => (
                     <div key={msg.id} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
                          {!msg.isUser && (
@@ -118,7 +118,7 @@ export default function ChatPage() {
                         <div className={`max-w-[70%] px-4 py-2.5 rounded-2xl shadow-sm ${
                             msg.isUser 
                                 ? 'bg-[#DD6B20] text-white rounded-br-none' 
-                                : 'bg-white text-slate-800 border border-slate-100 rounded-bl-none'
+                                : 'bg-white text-slate-900 border border-slate-200 rounded-bl-none'
                         }`}>
                             <p className="text-sm">{msg.message}</p>
                             <span className={`text-[10px] mt-1 block text-right ${msg.isUser ? 'text-orange-100' : 'text-slate-400'}`}>
@@ -130,7 +130,7 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 border-t border-slate-100 bg-white">
+            <div className="p-4 border-t border-slate-200 bg-white/80 backdrop-blur-md">
                 <div className="flex gap-2">
                     <Input 
                         placeholder="Type your message..." 

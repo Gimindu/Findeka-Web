@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Trophy, Award, Star, MapPin, Calendar, Edit, Medal } from "lucide-react";
+import { Trophy, Award, Star, MapPin, Calendar, Edit, Medal } from "lucide-react";
 
 export default function ProfilePage() {
   return (
