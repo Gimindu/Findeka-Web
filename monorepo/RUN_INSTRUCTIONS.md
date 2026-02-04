@@ -2,8 +2,15 @@
 
 ## Quick Start (Easiest)
 
+
+> [!WARNING]
+> **First Run Notice - Large Download (~5GB)**
+> On the very first run, the AI Service will download several large machine learning models (CLIP, Sentence-BERT, MobileNet, SpaCy).
+> **Please ensure you have a stable internet connection and at least 5GB of free disk space.**
+
 1.  Double-click **`start_app.bat`** in the `monorepo` folder.
 2.  This will open two terminal windows (one for AI, one for Web) and start everything automatically.
+
 
 ## Manual Start
 

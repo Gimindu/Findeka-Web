@@ -1,69 +1,54 @@
-# React + TypeScript + Vite
+# Findeka - AI Lost & Found System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Findeka is an intelligent Lost & Found application that uses a hybrid AI approach to match lost items with found items. It combines **text analysis** (BERT) and **computer vision** (CLIP, MobileNetV2, EasyOCR) to rank potential matches based on visual similarity, semantic description matching, and location/time proximity.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ⚡ Quick Start (Supervisor Guide)
 
-## Expanding the ESLint configuration
+> [!WARNING]
+> **First Run Notice - Large Download (~5GB)**
+> On the very first run, the AI Service will download several large machine learning models (CLIP, Sentence-BERT, MobileNet, SpaCy).
+> **Please ensure you have a stable internet connection and at least 5GB of free disk space.**
+> This is a one-time process. Subsequent runs will be instant.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### How to Run
+1.  Navigate to the `monorepo` folder.
+2.  Double-click **`start_app.bat`**.
+3.  Wait for the automated setup to complete:
+    -   It will install Node.js dependencies (`npm install`) automatically.
+    -   It will set up the Python virtual environment and install dependencies.
+    -   It will download the necessary AI models.
+4.  Once running, two windows will open:
+    -   **Web App**: [http://localhost:5173](http://localhost:5173)
+    -   **AI Service**: [http://localhost:8000](http://localhost:8000) (running in background)
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+## 🏗️ Architecture
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+-   **Frontend**: Vite + React + TailwindCSS
+-   **Backend / AI**: Python (FastAPI)
+-   **Database**: MongoDB Atlas
+-   **AI Models**:
+    -   **CLIP (OpenAI)**: Image-Text matching
+    -   **Sentence-BERT**: Semantic text similarity
+    -   **MobileNetV2**: Visual feature extraction
+    -   **EasyOCR**: Text extraction from images (ID cards, documents)
+
+## 🔧 Manual Run (Developer Mode)
+
+If you prefer running components individually:
+
+### 1. Web Frontend
+```bash
+cd monorepo/apps/web
+npm install  # (Only needed first time)
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. AI Service
+```bash
+cd monorepo/apps/ai-service
+./run_service.bat
 ```
