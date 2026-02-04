@@ -10,6 +10,7 @@
 
 1.  Double-click **`start_app.bat`** in the `monorepo` folder.
 2.  This will open two terminal windows (one for AI, one for Web) and start everything automatically.
+3.  If you run it new, this has 4.5GB Modules to download 
 
 
 ## Manual Start
