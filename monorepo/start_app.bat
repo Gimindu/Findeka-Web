@@ -10,6 +10,10 @@ start "Findeka AI Service" cmd /k "call apps\ai-service\run_service.bat"
 echo.
 echo [2/2] Starting Web Application...
 cd apps\web
+if not exist node_modules (
+    echo 📦 Installing Web Dependencies...
+    call npm install
+)
 start "Findeka Web App" cmd /k "npm run dev"
 
 echo.
