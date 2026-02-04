@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Plus,
@@ -8,17 +8,32 @@ import {
   MapPin,
   Calendar,
   ArrowUpRight,
-  Filter
+  Filter,
+  Activity
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
+import { checkHealth } from "@/services/aiService";
 
 export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const verifyBackend = async () => {
+      const isOnline = await checkHealth();
+      setIsBackendOnline(isOnline);
+    };
+    verifyBackend();
+    
+    // Optional: Poll every 30 seconds
+    const interval = setInterval(verifyBackend, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Mock data preserved from original
   const items = [
@@ -62,7 +77,7 @@ export default function DashboardPage() {
       status: "active",
     },
     {
-       id: 4,
+      id: 4,
        type: "found",
        title: "Blue Backpack",
        category: "Clothing",
@@ -105,7 +120,26 @@ export default function DashboardPage() {
       <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-gradient-to-r from-[#DD6B20] to-[#FF8C42] rounded-2xl p-8 text-white relative overflow-hidden shadow-lg shadow-orange-500/20">
             <div className="relative z-10">
-                <h1 className="text-3xl font-bold mb-2">Welcome back, Gimindu!</h1>
+                <div className="flex justify-between items-start mb-2">
+                    <h1 className="text-3xl font-bold">Welcome back, Gimindu!</h1>
+                    
+                    {/* Backend Status Indicator */}
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 backdrop-blur-md transition-colors ${
+                        isBackendOnline === true ? 'bg-emerald-500/20 text-white border border-emerald-400/30' : 
+                        isBackendOnline === false ? 'bg-red-500/20 text-white border border-red-400/30' :
+                        'bg-white/10 text-white/70'
+                    }`}>
+                        <div className={`w-2 h-2 rounded-full ${
+                            isBackendOnline === true ? 'bg-emerald-400 animate-pulse' : 
+                            isBackendOnline === false ? 'bg-red-400' :
+                            'bg-gray-400'
+                        }`} />
+                        {isBackendOnline === true ? 'AI Service Online' : 
+                         isBackendOnline === false ? 'AI Service Offline' : 
+                         'Connecting...'}
+                    </div>
+                </div>
+                
                 <p className="text-orange-50 mb-6 max-w-md">You have 2 items with potential matches today. Check them out to reunite with your belongings.</p>
                 <div className="flex gap-3">
                    <Link to="/report-item">

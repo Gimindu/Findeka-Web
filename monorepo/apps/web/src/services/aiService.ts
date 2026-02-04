@@ -49,3 +49,12 @@ export const submitItem = async (formData: FormData) => {
         throw error;
     }
 };
+
+export const checkHealth = async (): Promise<boolean> => {
+    try {
+        const response = await fetch(`${API_URL}/`);
+        return response.ok;
+    } catch (error) {
+        return false;
+    }
+};

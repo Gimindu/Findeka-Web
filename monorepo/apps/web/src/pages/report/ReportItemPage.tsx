@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { MapPin, UploadCloud, X, Loader2, AlertTriangle, ArrowRight } from "lucide-react";
+import { MapPin, UploadCloud, X, Loader2, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { motion, AnimatePresence } from "framer-motion";
 import { searchItems, submitItem, ItemMatch } from "@/services/aiService";
+import { useNavigate } from "react-router-dom";
 
 const categories: Record<string, string[]> = {
   Accessories: ["Jewelry", "Watches", "Bags", "Wallets", "Sunglasses", "Keys", "Other"],
@@ -26,11 +27,17 @@ const commonLocations = [
 ];
 
 export default function ReportItemPage() {
+  const navigate = useNavigate();
   const [postType, setPostType] = useState<"lost" | "found">("lost");
   const [matches, setMatches] = useState<ItemMatch[]>([]);
   const [showMatchesModal, setShowMatchesModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<ItemMatch | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Custom Success Modal State
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [reportedId, setReportedId] = useState("");
 
   const [postData, setPostData] = useState({
     title: "",
@@ -113,9 +120,10 @@ export default function ReportItemPage() {
       try {
           // ensure type is set if passing plain form data again, which we are.
           const res = await submitItem(formData);
-          alert("Success! Your item has been reported. ID: " + res.id);
-          // Reset form or redirect
-          window.location.reload(); 
+          // NEW: Show Success Modal instead of alert
+          setReportedId(res.id);
+          setSuccessMessage("Your item has been successfully reported to our AI system.");
+          setShowSuccessModal(true);
       } catch (err: any) {
           alert("Failed to submit item: " + err.message);
       }
@@ -141,6 +149,11 @@ export default function ReportItemPage() {
 
       await performSubmit(formData);
       setIsLoading(false);
+  };
+
+  const handleSuccessClose = () => {
+      setShowSuccessModal(false);
+      navigate("/dashboard");
   };
 
   return (
@@ -471,6 +484,57 @@ export default function ReportItemPage() {
                                     It's not a match
                                 </Button>
                             </div>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm"
+                >
+                    <motion.div 
+                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                        className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative"
+                    >
+                        <div className="h-32 bg-emerald-500 relative overflow-hidden flex items-center justify-center">
+                            <div className="absolute inset-0 bg-black/10"></div>
+                            {/* Animated Checkmark Circle */}
+                            <motion.div 
+                                initial={{ scale: 0, rotate: -45 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ delay: 0.2, type: "spring" }}
+                                className="bg-white rounded-full p-4 relative z-10 shadow-lg"
+                            >
+                                <CheckCircle2 className="h-10 w-10 text-emerald-600" strokeWidth={3} />
+                            </motion.div>
+                            
+                             {/* Decorative circles */}
+                             <div className="absolute top-0 right-0 w-24 h-24 bg-white/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                             <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/20 rounded-full blur-xl -ml-10 -mb-10"></div>
+                        </div>
+
+                        <div className="px-8 py-6 text-center">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-2">Success!</h2>
+                            <p className="text-slate-500 mb-6 text-sm leading-relaxed">
+                                {successMessage}
+                            </p>
+                            
+                            <div className="bg-slate-50 rounded-lg p-3 mb-6 border border-slate-100">
+                                <span className="text-xs uppercase tracking-wider font-semibold text-slate-400 block mb-1">Reference ID</span>
+                                <span className="font-mono text-slate-700 font-medium">{reportedId}</span>
+                            </div>
+
+                            <Button onClick={handleSuccessClose} className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 py-6 text-lg font-medium">
+                                Go to Dashboard
+                            </Button>
                         </div>
                     </motion.div>
                 </motion.div>

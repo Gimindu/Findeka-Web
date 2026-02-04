@@ -50,27 +50,24 @@ class AIModelManager:
         if spacy:
             print("⬇️ Loading SpaCy...")
             try:
-                # Try loading from cache first if it was saved there
-                model_path = MODELS_FOLDER / "en_core_web_lg"
-                if model_path.exists():
-                    self.nlp = spacy.load(str(model_path))
-                    print("✅ SpaCy loaded from cache")
-                else:
-                    try:
-                        spacy.cli.download("en_core_web_lg")
-                        self.nlp = spacy.load("en_core_web_lg")
-                    except Exception as e:
-                        print(f"⚠️ Could not download SpaCy: {e}")
+                # We assume the batch file or pip install handled the download
+                self.nlp = spacy.load("en_core_web_lg")
+                print("✅ SpaCy loaded")
             except Exception as e:
                 print(f"❌ Failed to load SpaCy: {e}")
+                print("Try running: python -m spacy download en_core_web_lg")
         else:
             print("⚠️ SpaCy not installed. Skipping.")
 
         # 2. Load BERT
         if SentenceTransformer:
             print("⬇️ Loading BERT...")
-            self.bert_model = SentenceTransformer('all-MiniLM-L6-v2')
-            print("✅ BERT loaded")
+            try:
+                # cache_folder ensures it saves to our local storage
+                self.bert_model = SentenceTransformer('all-MiniLM-L6-v2', cache_folder=str(MODELS_FOLDER))
+                print("✅ BERT loaded")
+            except Exception as e:
+                 print(f"❌ Failed to load BERT: {e}")
         else:
             print("⚠️ SentenceTransformer not installed. Skipping.")
 
@@ -78,7 +75,8 @@ class AIModelManager:
         if clip and torch:
             print("⬇️ Loading CLIP...")
             try:
-                self.clip_model, self.clip_preprocess = clip.load("ViT-B/32", device=self.device)
+                # download_root ensures it saves to our local storage
+                self.clip_model, self.clip_preprocess = clip.load("ViT-B/32", device=self.device, download_root=str(MODELS_FOLDER))
                 print("✅ CLIP loaded")
             except Exception as e:
                  print(f"❌ Failed to load CLIP: {e}")
@@ -88,19 +86,26 @@ class AIModelManager:
         # 4. Load MobileNetV2
         if MobileNetV2:
             print("⬇️ Loading MobileNetV2...")
-            self.mobilenet_model = MobileNetV2(weights='imagenet', include_top=False, pooling='avg', input_shape=(224,224,3))
-            self.mobilenet_model.trainable = False
-            print("✅ MobileNetV2 loaded")
+            try:
+                self.mobilenet_model = MobileNetV2(weights='imagenet', include_top=False, pooling='avg', input_shape=(224,224,3))
+                self.mobilenet_model.trainable = False
+                print("✅ MobileNetV2 loaded")
+            except Exception as e:
+                print(f"❌ Failed to load MobileNetV2: {e}")
         else:
             print("⚠️ TensorFlow/MobileNet not installed. Skipping.")
 
         # 5. Load OCR
         if easyocr:
             print("⬇️ Loading EasyOCR...")
-            # gpu=True only if cuda
-            use_gpu = (self.device == 'cuda')
-            self.ocr_reader = easyocr.Reader(['en'], gpu=use_gpu)
-            print("✅ EasyOCR loaded")
+            try:
+                # gpu=True only if cuda
+                use_gpu = (self.device == 'cuda')
+                # model_storage_directory ensures it saves to our local storage
+                self.ocr_reader = easyocr.Reader(['en'], gpu=use_gpu, model_storage_directory=str(MODELS_FOLDER))
+                print("✅ EasyOCR loaded")
+            except Exception as e:
+                print(f"❌ Failed to load EasyOCR: {e}")
         else:
              print("⚠️ EasyOCR not installed. Skipping.")
 

@@ -1,0 +1,21 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+
+# Project Specific
+apps/ai-service/storage/saved_models/
+apps/ai-service/storage/temp/
+.env
+
+# Build
+dist/
+build/
+
+# Brain
+.gemini/
