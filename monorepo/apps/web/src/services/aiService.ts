@@ -58,3 +58,18 @@ export const checkHealth = async (): Promise<boolean> => {
         return false;
     }
 };
+
+export const fetchAllItems = async (): Promise<{ items: ItemMatch[] }> => {
+    try {
+        const response = await fetch(`${API_URL}/items`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to fetch items: ${errorText}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("API Error:", error);
+        throw error;
+    }
+};
+

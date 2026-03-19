@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Search, 
   Filter, 
@@ -12,77 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Mock Data
-const MOCK_ITEMS = [
-  {
-    id: 1,
-    type: "lost",
-    title: "iPhone 15 Pro Max",
-    category: "Electronics",
-    location: "Central Park, NYC",
-    date: "2024-03-15",
-    description: "Black titanium iPhone 15 Pro Max. Lost near the Bethesda Fountain. has a blue case.",
-    image: "https://images.unsplash.com/photo-1696446701796-da61225697cc?q=80&w=2070&auto=format&fit=crop",
-    status: "active"
-  },
-  {
-    id: 2,
-    type: "found",
-    title: "Brown Leather Wallet",
-    category: "Personal Items",
-    location: "Grand Central Terminal",
-    date: "2024-03-14",
-    description: "Found a brown leather wallet with some cards. No ID found inside.",
-    image: "https://images.unsplash.com/photo-1627123424574-181ce5171700?q=80&w=2670&auto=format&fit=crop",
-    status: "active"
-  },
-  {
-    id: 3,
-    type: "lost",
-    title: "Golden Retriever Puppy",
-    category: "Pets",
-    location: "Brooklyn Heights Promenade",
-    date: "2024-03-15",
-    description: "3 month old golden retriever puppy. Answers to the name 'Buddy'. Wearing a red collar.",
-    image: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?q=80&w=2615&auto=format&fit=crop",
-    status: "urgent"
-  },
-  {
-    id: 4,
-    type: "found",
-    title: "Car Keys",
-    category: "Keys",
-    location: "Times Square",
-    date: "2024-03-13",
-    description: "Set of car keys (Toyota) with a Spiderman keychain found near the red stairs.",
-    image: "https://images.unsplash.com/photo-1622396636133-74323dc26867?q=80&w=2522&auto=format&fit=crop",
-    status: "active"
-  },
-  {
-    id: 5,
-    type: "lost",
-    title: "MacBook Air M2",
-    category: "Electronics",
-    location: "Public Library",
-    date: "2024-03-12",
-    description: "Silver MacBook Air left in the main reading room. Has a 'Code Like a Girl' sticker.",
-    image: "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?q=80&w=2070&auto=format&fit=crop",
-    status: "active"
-  },
-  {
-    id: 6,
-    type: "found",
-    title: "Vintage Camera",
-    category: "Electronics",
-    location: "SoHo",
-    date: "2024-03-10",
-    description: "Old film camera found on a bench. Looks like a Canon AE-1.",
-    image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=2000&auto=format&fit=crop",
-    status: "active"
-  }
-];
+import { fetchAllItems, ItemMatch } from "@/services/aiService";
 
-const CATEGORIES = ["All", "Electronics", "Personal Items", "Pets", "Keys", "Documents", "Clothing"];
+const CATEGORIES = ["All", "Electronics", "Personal Items", "Pets", "Keys", "Documents", "Clothing", "Other"];
 const TYPES = ["All", "Lost", "Found"];
 
 export default function SearchPage() {
@@ -90,13 +22,36 @@ export default function SearchPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedType, setSelectedType] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
+  const [items, setItems] = useState<ItemMatch[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredItems = MOCK_ITEMS.filter(item => {
-    const matchesQuery = item.title.toLowerCase().includes(query.toLowerCase()) || 
-                         item.description.toLowerCase().includes(query.toLowerCase()) ||
-                         item.location.toLowerCase().includes(query.toLowerCase());
+  useEffect(() => {
+    const loadItems = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchAllItems();
+        setItems(data.items || []);
+        setError(null);
+      } catch (err) {
+        console.error("Failed to load items:", err);
+        setError("Failed to load items. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadItems();
+  }, []);
+
+  const filteredItems = items.filter(item => {
+    const title = item.name || "";
+    const desc = item.description || "";
+    const loc = item.location || "";
+    const matchesQuery = title.toLowerCase().includes(query.toLowerCase()) || 
+                         desc.toLowerCase().includes(query.toLowerCase()) ||
+                         loc.toLowerCase().includes(query.toLowerCase());
     const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
-    const matchesType = selectedType === "All" || item.type.toLowerCase() === selectedType.toLowerCase();
+    const matchesType = selectedType === "All" || (item.type || "").toLowerCase() === selectedType.toLowerCase();
     
     return matchesQuery && matchesCategory && matchesType;
   });
@@ -117,7 +72,7 @@ export default function SearchPage() {
                 className={`gap-2 ${showFilters ? 'bg-orange-50 border-orange-200 text-orange-600' : 'bg-white border-slate-200 text-slate-600'}`}
             >
                 <Filter className="h-4 w-4" />
-                Wait Filters
+                Filters
             </Button>
         </div>
 
@@ -141,9 +96,9 @@ export default function SearchPage() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                     >
-                        <div className="pt-4 border-t border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-300">Category</label>
+                                <label className="text-sm font-medium text-slate-700">Category</label>
                                 <div className="flex flex-wrap gap-2">
                                     {CATEGORIES.map(cat => (
                                         <button
@@ -186,19 +141,38 @@ export default function SearchPage() {
 
         {/* Results Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems.length > 0 ? (
+            {loading ? (
+                <div className="col-span-full py-12 text-center text-slate-500">
+                    <div className="w-10 h-10 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
+                    <p>Loading items...</p>
+                </div>
+            ) : error ? (
+                <div className="col-span-full py-12 text-center text-red-500 bg-red-50 rounded-xl">
+                    <p>{error}</p>
+                    <Button variant="outline" onClick={() => window.location.reload()} className="mt-4">
+                        Try Again
+                    </Button>
+                </div>
+            ) : filteredItems.length > 0 ? (
                 filteredItems.map(item => (
                     <motion.div
-                        key={item.id}
+                        key={item._id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <Card className="h-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow group overflow-hidden bg-white">
-                            <div className="relative aspect-video overflow-hidden">
+                        <Card className="h-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow group overflow-hidden bg-white flex flex-col">
+                            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                                 <img 
-                                    src={item.image} 
-                                    alt={item.title}
+                                    src={item.image_url || "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image"} 
+                                    alt={item.name}
+                                    onError={(e) => {
+                                        const target = e.currentTarget;
+                                        const fallback = "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image";
+                                        if (target.src !== fallback) {
+                                            target.src = fallback;
+                                        }
+                                    }}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                                 />
                                 <div className="absolute top-3 left-3">
@@ -211,38 +185,38 @@ export default function SearchPage() {
                                     </span>
                                 </div>
                             </div>
-                            <CardContent className="p-4 flex flex-col gap-3">
+                            <CardContent className="p-4 flex flex-1 flex-col gap-3">
                                 <div>
                                     <div className="flex justify-between items-start mb-1">
-                                        <span className="text-xs font-medium text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-md">
+                                        <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 flex py-0.5 rounded-md self-center">
                                             {item.category}
                                         </span>
                                         <span className="text-xs text-slate-500 flex items-center">
                                             <Clock className="w-3 h-3 mr-1" />
-                                            {item.status}
+                                            {item.status || "active"}
                                         </span>
                                     </div>
-                                    <h3 className="font-bold text-slate-900 line-clamp-1 group-hover:text-orange-600 transition-colors">
-                                        {item.title}
+                                    <h3 className="font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-orange-600 transition-colors">
+                                        {item.name}
                                     </h3>
                                 </div>
                                 
-                                        <p className="text-slate-600 text-sm line-clamp-2 min-h-[2.5rem]">
+                                <p className="text-slate-600 text-sm line-clamp-2 min-h-[2.5rem] mb-2">
                                     {item.description}
                                 </p>
 
-                                <div className="pt-3 mt-auto border-t border-slate-100 space-y-2">
-                                    <div className="flex items-center text-xs text-slate-500">
+                                <div className="mt-auto pt-3 border-t border-slate-100 space-y-2">
+                                    <div className="flex items-center text-xs text-slate-500 font-medium">
                                         <MapPin className="w-3.5 h-3.5 mr-1.5 text-slate-400 shrink-0" />
                                         <span className="truncate">{item.location}</span>
                                     </div>
-                                    <div className="flex items-center text-xs text-slate-500">
+                                    <div className="flex items-center text-xs text-slate-500 font-medium">
                                         <Calendar className="w-3.5 h-3.5 mr-1.5 text-slate-400 shrink-0" />
-                                        <span>{item.date}</span>
+                                        <span>{item.date_lost || item.date_found || new Date(item.created_at).toLocaleDateString()}</span>
                                     </div>
                                 </div>
 
-                                <Button className="w-full mt-2 bg-slate-100 text-slate-900 hover:bg-slate-200">
+                                <Button className="w-full mt-4 bg-slate-50 text-slate-900 border border-slate-200 shadow-none hover:bg-slate-100 transition-colors">
                                     View Details
                                 </Button>
                             </CardContent>

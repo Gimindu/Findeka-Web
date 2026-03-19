@@ -21,11 +21,11 @@ db = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    global mongo_client, db
+    global db
     print("🚀 Connecting to MongoDB...")
     try:
-        mongo_client = MongoClient(MONGO_URI)
-        db = mongo_client[DB_NAME]
+        client = MongoClient(MONGO_URI)
+        db = client[DB_NAME]
         print("✅ Connected to MongoDB")
     except Exception as e:
         print(f"❌ Failed to connect to MongoDB: {e}")
@@ -243,3 +243,43 @@ async def submit_item(
     result = db[collection_name].insert_one(item_doc)
     
     return {"status": "success", "id": str(result.inserted_id), "message": "Item registered successfully"}
+
+@app.get("/items")
+async def get_all_items():
+    """
+    Fetches all items from both 'lost_items' and 'found_items' collections.
+    Returns them combined, with IDs converted to strings and image URLs resolved.
+    """
+    global db
+    _db = db
+    if _db is None:
+         # Fallback connection if global db is not set
+         try:
+             client = MongoClient(MONGO_URI)
+             _db = client[DB_NAME]
+         except Exception as e:
+             raise HTTPException(status_code=500, detail="Database not connected")
+
+
+    all_items = []
+    
+    # Fetch lost items
+    lost_items = list(_db["lost_items"].find())
+    for item in lost_items:
+        item["_id"] = str(item["_id"])
+        item["type"] = "lost"
+        item["image_url"] = get_image_url(item.get("image_path"))
+        all_items.append(item)
+        
+    # Fetch found items
+    found_items = list(_db["found_items"].find())
+    for item in found_items:
+        item["_id"] = str(item["_id"])
+        item["type"] = "found"
+        item["image_url"] = get_image_url(item.get("image_path"))
+        all_items.append(item)
+
+    # Sort by creation date descending
+    all_items.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+    
+    return {"items": all_items}
