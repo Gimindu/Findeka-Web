@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Clock, Tag, MessageSquare, AlertTriangle, ShieldCheck } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Clock, Tag, Phone, AlertTriangle, ShieldCheck } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { fetchAllItems, ItemMatch } from "@/services/aiService";
@@ -137,10 +137,12 @@ export default function ItemDetailsPage() {
                 </div>
 
                 <div className="mt-auto space-y-3 pt-6">
-                  <Button className="w-full h-12 text-lg bg-[#DD6B20] hover:bg-[#C05616] text-white shadow-lg shadow-orange-500/25">
-                    <MessageSquare className="w-5 h-5 mr-2" />
-                    Contact Reporter
-                  </Button>
+                  <a href={`tel:${item.phone || '+94701234567'}`} className="block w-full">
+                    <Button className="w-full h-12 text-lg bg-[#DD6B20] hover:bg-[#C05616] text-white shadow-lg shadow-orange-500/25 cursor-pointer">
+                      <Phone className="w-5 h-5 mr-2" />
+                      Call {item.type.toLowerCase() === 'lost' ? "Reporter" : "Finder"} ({item.phone || '+94 70 123 4567'})
+                    </Button>
+                  </a>
                   <Button variant="outline" className="w-full h-12 text-slate-600 border-slate-200 hover:bg-slate-50">
                     <ShieldCheck className="w-5 h-5 mr-2" />
                     Report this listing

@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Bell, User, Shield, LogOut } from "lucide-react";
+import { Bell, User, Shield, LogOut, CheckCircle2, AlertTriangle, X } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { getUserProfile, updateUserProfile, getUserSettings, updateUserSettings } from "../../services/aiService";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +25,8 @@ export default function SettingsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -80,10 +83,11 @@ export default function SettingsPage() {
               updateUserProfile(user.uid, profile),
               updateUserSettings(user.uid, settings)
           ]);
-          alert("Settings updated successfully!");
+          setSuccessMsg("Settings updated successfully!");
+          setTimeout(() => setSuccessMsg(null), 3500); // Auto-hide success
       } catch (error) {
           console.error("Failed to save settings", error);
-          alert("Failed to save settings.");
+          setErrorMsg("Failed to save settings.");
       } finally {
           setSaving(false);
       }
@@ -235,6 +239,62 @@ export default function SettingsPage() {
              </Button>
          </div>
       </div>
+
+       {/* Custom Modals */}
+       <AnimatePresence>
+            {/* Success Toast */}
+            {successMsg && (
+                <motion.div 
+                    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 50, scale: 0.9 }}
+                    className="fixed bottom-6 right-6 z-[100] bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3"
+                >
+                    <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+                    <span className="font-medium">{successMsg}</span>
+                </motion.div>
+            )}
+
+            {/* Error Modal */}
+            {errorMsg && (
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/60 z-[80] flex items-center justify-center p-4 backdrop-blur-sm"
+                >
+                    <motion.div 
+                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                        className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative"
+                    >
+                        <div className="h-32 bg-red-500 relative overflow-hidden flex items-center justify-center">
+                            <div className="absolute inset-0 bg-black/10"></div>
+                            <motion.div 
+                                initial={{ scale: 0, rotate: -45 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ delay: 0.2, type: "spring" }}
+                                className="bg-white rounded-full p-4 relative z-10 shadow-lg"
+                            >
+                                <X className="h-10 w-10 text-red-600" strokeWidth={3} />
+                            </motion.div>
+                        </div>
+                        <div className="px-8 py-6 text-center">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-2">Error</h2>
+                            <p className="text-slate-500 mb-6 text-sm leading-relaxed">
+                                {errorMsg}
+                            </p>
+                            <Button onClick={() => setErrorMsg(null)} className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 py-6 text-lg font-medium">
+                                Close
+                            </Button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+       </AnimatePresence>
+
     </DashboardLayout>
   );
 }

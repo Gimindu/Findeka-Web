@@ -200,7 +200,8 @@ async def submit_item(
     color: str = Form(...),
     location: str = Form(...),
     date: str = Form(...),
-    image: UploadFile = File(None)
+    image: UploadFile = File(None),
+    uid: str = Form(None)
 ):
     """
     Saves the item to the database (if no match was found/accepted).
@@ -236,6 +237,7 @@ async def submit_item(
         "location": location,
         "date_lost" if mode == "lost" else "date_found": date,
         "image_path": saved_img_path,
+        "uid": uid,
         "created_at": datetime.now(),
         "status": "active" # active, resolved
     }
@@ -344,3 +346,29 @@ async def update_user_settings(uid: str, data: dict):
         upsert=True
     )
     return {"status": "success"}
+
+@app.delete("/items/{item_id}")
+async def delete_item(item_id: str):
+    if db is None:
+         raise HTTPException(status_code=500, detail="Database not connected")
+    from bson import ObjectId
+    import os
+    
+    collections = ['lost_items', 'found_items']
+    for coll in collections:
+        try:
+            item = db[coll].find_one({"_id": ObjectId(item_id)})
+            if item:
+                img_path = item.get('image_path')
+                if img_path and os.path.exists(img_path):
+                    try:
+                        os.remove(img_path)
+                    except Exception as e:
+                        print(f"Failed to delete image: {e}")
+                
+                result = db[coll].delete_one({"_id": ObjectId(item_id)})
+                return {"status": "success", "message": "Item deleted successfully"}
+        except Exception as e:
+            continue
+            
+    raise HTTPException(status_code=404, detail="Item not found")

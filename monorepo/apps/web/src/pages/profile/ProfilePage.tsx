@@ -1,17 +1,43 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Award, Star, MapPin, Calendar, Edit, Medal } from "lucide-react";
+import { Trophy, Award, Star, MapPin, Calendar, Edit, Medal, Search, Trash2, X, AlertTriangle } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { getUserProfile } from "../../services/aiService";
-import { useNavigate } from "react-router-dom";
+import { getUserProfile, fetchAllItems, ItemMatch, deleteItem } from "../../services/aiService";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
+  const [userItems, setUserItems] = useState<ItemMatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const initDelete = (itemId: string) => {
+      setConfirmDeleteId(itemId);
+  };
+
+  const confirmDelete = async () => {
+      if (!confirmDeleteId) return;
+      const itemId = confirmDeleteId;
+      setConfirmDeleteId(null);
+      
+      setDeletingId(itemId);
+      try {
+          await deleteItem(itemId);
+          setUserItems(prev => prev.filter((i: any) => i._id !== itemId && i.id !== itemId));
+      } catch (err) {
+          setErrorMsg("Failed to delete the item. Please try again.");
+          console.error(err);
+      } finally {
+          setDeletingId(null);
+      }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -19,18 +45,27 @@ export default function ProfilePage() {
         return;
     }
 
-    const fetchProfile = async () => {
+    const fetchData = async () => {
         try {
-            const data = await getUserProfile(user.uid);
-            setProfile(data);
+            const [profileData, allItemsData] = await Promise.all([
+                getUserProfile(user.uid),
+                fetchAllItems()
+            ]);
+            setProfile(profileData);
+            
+            // Filter to only items reported by this user
+            const myItems = allItemsData.items.filter((item: any) => item.uid === user.uid);
+            myItems.sort((a, b) => new Date(b.created_at || b.date_lost || b.date_found).getTime() - new Date(a.created_at || a.date_lost || a.date_found).getTime());
+            setUserItems(myItems);
+            
         } catch (error) {
-            console.error("Failed to load profile", error);
+            console.error("Failed to load profile data", error);
         } finally {
             setLoading(false);
         }
     };
 
-    fetchProfile();
+    fetchData();
   }, [user, navigate]);
 
   if (loading) {
@@ -146,7 +181,129 @@ export default function ProfilePage() {
                 </Card>
              </div>
           </div>
+          {/* My Items Section */}
+          <div className="mt-12">
+             <h2 className="text-xl font-bold text-slate-900 mb-6 border-b border-slate-200 pb-2">My Reported Items</h2>
+             {userItems.length === 0 ? (
+                 <Card className="border-none shadow-sm bg-slate-50">
+                     <CardContent className="p-8 text-center flex flex-col items-center">
+                         <div className="h-16 w-16 bg-slate-200 rounded-full flex items-center justify-center mb-4">
+                             <Search className="h-8 w-8 text-slate-400" />
+                         </div>
+                         <h3 className="text-lg font-semibold text-slate-900">No items reported yet</h3>
+                         <p className="text-slate-500 mt-1 max-w-sm">When you report a found or lost item, it will appear here so you can track its status.</p>
+                         <Button onClick={() => navigate('/report-item')} className="mt-6 bg-[#DD6B20] hover:bg-[#C05616]">
+                             Report an Item Now
+                         </Button>
+                     </CardContent>
+                 </Card>
+             ) : (
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     {userItems.map((item: any) => (
+                         <Card key={item._id} className="border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col bg-white">
+                             <div className="h-48 bg-slate-100 relative">
+                                 <img 
+                                     src={item.image_url || "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image"} 
+                                     alt={item.name}
+                                     className="w-full h-full object-cover relative z-0"
+                                     onError={(e) => {
+                                         e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image";
+                                     }}
+                                 />
+                                 <div className="absolute top-3 left-3 z-10">
+                                     <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-sm ${
+                                         item.type === 'lost' || item.type === 'Lost'
+                                         ? 'bg-red-500/90 text-white' 
+                                         : 'bg-emerald-500/90 text-white'
+                                     }`}>
+                                         {item.type || 'unknown'}
+                                     </span>
+                                 </div>
+                                 <div className="absolute top-3 right-3 z-10 flex gap-2">
+                                     <button 
+                                         onClick={() => initDelete(item._id || item.id)}
+                                         disabled={deletingId === (item._id || item.id)}
+                                         className="p-1.5 bg-white/90 hover:bg-red-50 text-red-500 rounded-md backdrop-blur-md shadow-sm transition-colors border border-transparent hover:border-red-200 disabled:opacity-50"
+                                         title="Delete Item"
+                                     >
+                                         <Trash2 className="h-4 w-4" />
+                                     </button>
+                                     <span className={`px-2.5 py-1 rounded-md text-xs font-medium backdrop-blur-md shadow-sm flex items-center ${
+                                         item.status === 'resolved' 
+                                         ? 'bg-green-100/95 text-green-700' 
+                                         : 'bg-blue-100/95 text-blue-700'
+                                     }`}>
+                                         {item.status === 'resolved' ? 'Resolved' : 'Active'}
+                                     </span>
+                                 </div>
+                             </div>
+                             <CardContent className="p-5 flex flex-col flex-1">
+                                 <h3 className="font-bold text-slate-900 mb-1 text-lg line-clamp-1">{item.name}</h3>
+                                 <p className="flex items-center text-xs text-slate-500 mb-2">
+                                     <Calendar className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                                     {new Date(item.created_at || item.date_lost || item.date_found || Date.now()).toLocaleDateString()}
+                                 </p>
+                                 <p className="text-sm text-slate-600 mb-5 line-clamp-2 flex-1 leading-relaxed">{item.description}</p>
+                                 
+                                 <Link to={`/item/${item._id || item.id}`} className="mt-auto block w-full">
+                                     <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-orange-600 transition-colors">
+                                         View Details & Status
+                                     </Button>
+                                 </Link>
+                             </CardContent>
+                         </Card>
+                     ))}
+                 </div>
+             )}
+          </div>
        </div>
+
+       {/* Custom Modals */}
+       <AnimatePresence>
+            {/* Delete Confirmation Modal */}
+            {confirmDeleteId && (
+                <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/60 z-[80] flex items-center justify-center p-4 backdrop-blur-sm"
+                >
+                    <motion.div 
+                        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                        className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative p-6 text-center"
+                    >
+                        <div className="mx-auto w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                            <Trash2 className="h-8 w-8" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2">Delete Item?</h2>
+                        <p className="text-slate-500 mb-6 text-sm">Are you sure you want to permanently delete this item? This action cannot be undone.</p>
+                        <div className="flex gap-3">
+                            <Button variant="outline" className="flex-1" onClick={() => setConfirmDeleteId(null)}>Cancel</Button>
+                            <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete}>Delete</Button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Error Modal */}
+            {errorMsg && (
+                <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/60 z-[80] flex items-center justify-center p-4 backdrop-blur-sm"
+                >
+                    <motion.div 
+                        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                        className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative p-6 text-center"
+                    >
+                        <div className="mx-auto w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                            <AlertTriangle className="h-8 w-8" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2">Error</h2>
+                        <p className="text-slate-500 mb-6 text-sm">{errorMsg}</p>
+                        <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white" onClick={() => setErrorMsg(null)}>Close</Button>
+                    </motion.div>
+                </motion.div>
+            )}
+       </AnimatePresence>
+
     </DashboardLayout>
   );
 }

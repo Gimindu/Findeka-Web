@@ -115,3 +115,12 @@ export const updateUserSettings = async (uid: string, data: any) => {
     return res.json();
 };
 
+export const deleteItem = async (itemId: string) => {
+    const res = await fetch(`${API_URL}/items/${itemId}`, {
+        method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete item");
+    globalItemsCache = null; // reset cache
+    return res.json();
+};
+

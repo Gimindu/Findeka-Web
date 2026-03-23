@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { MapPin, UploadCloud, X, Loader2, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
+import { MapPin, UploadCloud, X, Loader2, AlertTriangle, ArrowRight, CheckCircle2, Phone } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { motion, AnimatePresence } from "framer-motion";
 import { searchItems, submitItem, ItemMatch } from "@/services/aiService";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 const categories: Record<string, string[]> = {
   Accessories: ["Jewelry", "Watches", "Bags", "Wallets", "Sunglasses", "Keys", "Other"],
@@ -28,6 +29,7 @@ const commonLocations = [
 
 export default function ReportItemPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [postType, setPostType] = useState<"lost" | "found">("lost");
   const [matches, setMatches] = useState<ItemMatch[]>([]);
   const [showMatchesModal, setShowMatchesModal] = useState(false);
@@ -38,6 +40,7 @@ export default function ReportItemPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [reportedId, setReportedId] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [postData, setPostData] = useState({
     title: "",
@@ -92,6 +95,7 @@ export default function ReportItemPage() {
         formData.append("color", postData.color);
         formData.append("location", postData.location);
         formData.append("date", postData.date);
+        if (user?.uid) formData.append("uid", user.uid);
         
         if (postData.photos.length > 0) {
             formData.append("image", postData.photos[0]); // Send first image for scanning
@@ -110,7 +114,7 @@ export default function ReportItemPage() {
         }
     } catch (err: any) {
         console.error("Error:", err);
-        alert("Something went wrong: " + err.message);
+        setErrorMsg("Something went wrong: " + err.message);
     } finally {
         setIsLoading(false);
     }
@@ -125,7 +129,7 @@ export default function ReportItemPage() {
           setSuccessMessage("Your item has been successfully reported to our AI system.");
           setShowSuccessModal(true);
       } catch (err: any) {
-          alert("Failed to submit item: " + err.message);
+          setErrorMsg("Failed to submit item: " + err.message);
       }
   };
 
@@ -143,6 +147,7 @@ export default function ReportItemPage() {
       formData.append("color", postData.color);
       formData.append("location", postData.location);
       formData.append("date", postData.date);
+      if (user?.uid) formData.append("uid", user.uid);
       if (postData.photos.length > 0) {
           formData.append("image", postData.photos[0]);
       }
@@ -477,9 +482,11 @@ export default function ReportItemPage() {
                             </div>
 
                             <div className="pt-4 flex gap-3">
-                                <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={() => alert("Claim request sent!")}>
-                                    This is my item!
-                                </Button>
+                                <a href={`tel:${selectedMatch.phone || '+94701234567'}`} className="flex-1 flex">
+                                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 cursor-pointer">
+                                        <Phone className="w-4 h-4 mr-2" /> Call {postType === "lost" ? "Finder" : "Owner"} ({selectedMatch.phone || '+94 70 123 4567'})
+                                    </Button>
+                                </a>
                                 <Button className="flex-1" variant="outline" onClick={() => setSelectedMatch(null)}>
                                     It's not a match
                                 </Button>
@@ -534,6 +541,45 @@ export default function ReportItemPage() {
 
                             <Button onClick={handleSuccessClose} className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 py-6 text-lg font-medium">
                                 Go to Dashboard
+                            </Button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Error Modal */}
+            {errorMsg && (
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/60 z-[80] flex items-center justify-center p-4 backdrop-blur-sm"
+                >
+                    <motion.div 
+                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                        className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative"
+                    >
+                        <div className="h-32 bg-red-500 relative overflow-hidden flex items-center justify-center">
+                            <div className="absolute inset-0 bg-black/10"></div>
+                            <motion.div 
+                                initial={{ scale: 0, rotate: -45 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ delay: 0.2, type: "spring" }}
+                                className="bg-white rounded-full p-4 relative z-10 shadow-lg"
+                            >
+                                <X className="h-10 w-10 text-red-600" strokeWidth={3} />
+                            </motion.div>
+                        </div>
+                        <div className="px-8 py-6 text-center">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-2">Error</h2>
+                            <p className="text-slate-500 mb-6 text-sm leading-relaxed">
+                                {errorMsg}
+                            </p>
+                            <Button onClick={() => setErrorMsg(null)} className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 py-6 text-lg font-medium">
+                                Close
                             </Button>
                         </div>
                     </motion.div>
