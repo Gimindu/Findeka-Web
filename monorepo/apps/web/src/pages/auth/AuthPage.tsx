@@ -1,12 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { checkHealth } from '@/services/aiService';
 import LoginForm from './LoginForm';
 import SignupForm from './SignupForm';
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
+  const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const verifyBackend = async () => {
+      const isOnline = await checkHealth();
+      setIsBackendOnline(isOnline);
+    };
+    verifyBackend();
+    
+    // Optional: Poll every 30 seconds
+    const interval = setInterval(verifyBackend, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 flex items-center justify-center p-4">
@@ -39,10 +53,32 @@ export default function AuthPage() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="text-slate-500 mt-2"
+            className="text-slate-500 mt-2 mb-4"
           >
             Helping reunite people with their belongings
           </motion.p>
+          
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="flex justify-center"
+          >
+            <div className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 transition-colors ${
+                isBackendOnline === true ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 
+                isBackendOnline === false ? 'bg-red-50 text-red-700 border border-red-200' :
+                'bg-slate-50 text-slate-500 border border-slate-200'
+            }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                    isBackendOnline === true ? 'bg-emerald-500 animate-pulse' : 
+                    isBackendOnline === false ? 'bg-red-500' :
+                    'bg-slate-400'
+                }`} />
+                {isBackendOnline === true ? 'AI Service Online' : 
+                 isBackendOnline === false ? 'AI Service Offline' : 
+                 'Connecting...'}
+            </div>
+          </motion.div>
         </div>
 
         {/* Main Card */}

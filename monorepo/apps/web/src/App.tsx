@@ -4,6 +4,7 @@ import LoadingPage from './lib/startingPage/loadingPage';
 import AuthPage from './pages/auth/AuthPage';
 import Dashboard from './pages/dashboard/DashboardPage';
 import ReportItemPage from './pages/report/ReportItemPage';
+import ItemDetailsPage from './pages/item/ItemDetailsPage';
 // import LostFoundAI2 from './lib/copy/change_code';
 import Chat from './pages/chat/ChatPage';
 import Profile from './pages/profile/ProfilePage';
@@ -20,6 +21,7 @@ function App() {
         <Route path="/" element={<LoadingPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/item/:id" element={<ItemDetailsPage />} />
         <Route path="/report-item" element={<ReportItemPage />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/profile" element={ <Profile/>} />

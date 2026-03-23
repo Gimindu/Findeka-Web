@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { 
   Search, 
   Filter, 
@@ -216,9 +217,11 @@ export default function SearchPage() {
                                     </div>
                                 </div>
 
-                                <Button className="w-full mt-4 bg-slate-50 text-slate-900 border border-slate-200 shadow-none hover:bg-slate-100 transition-colors">
-                                    View Details
-                                </Button>
+                                <Link to={`/item/${item._id}`} className="w-full mt-4">
+                                  <Button className="w-full bg-slate-50 text-slate-900 border border-slate-200 shadow-none hover:bg-slate-100 transition-colors">
+                                      View Details
+                                  </Button>
+                                </Link>
                             </CardContent>
                         </Card>
                     </motion.div>

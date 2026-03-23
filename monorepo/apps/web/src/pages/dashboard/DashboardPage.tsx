@@ -2,25 +2,38 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Plus,
-  Search,
   CheckCircle2,
   Trophy,
   MapPin,
   Calendar,
-  ArrowUpRight,
-  Filter
+  ArrowUpRight
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import { checkHealth } from "@/services/aiService";
+import { checkHealth, fetchAllItems } from "@/services/aiService";
+
+type DashboardItem = {
+  id: string | number;
+  type: "lost" | "found" | string;
+  title: string;
+  category: string;
+  location: string;
+  date: string;
+  reward?: number;
+  description: string;
+  image: string;
+  matchScore?: number;
+  status: string;
+};
 
 export default function DashboardPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategory, setFilterCategory] = useState("all");
   const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null);
+
+  const [items, setItems] = useState<DashboardItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const verifyBackend = async () => {
@@ -34,69 +47,39 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Mock data preserved from original
-  const items = [
-    {
-      id: 1,
-      type: "lost",
-      title: "Lost iPhone 15 Pro",
-      category: "Electronics",
-      location: "Central Park, NYC",
-      date: "2024-07-10",
-      reward: 100,
-      description: "Black iPhone 15 Pro with a blue case. Lost near the fountain.",
-      image: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?q=80&w=2670&auto=format&fit=crop",
-      matchScore: 0,
-      status: "active",
-    },
-    {
-      id: 2,
-      type: "found",
-      title: "Found Leather Wallet",
-      category: "Personal Items",
-      location: "Times Square, NYC",
-      date: "2024-07-11",
-      reward: 0,
-      description: "Brown leather wallet found on the street. Contains credit cards.",
-      image: "https://images.unsplash.com/photo-1627123424574-181ce5171700?auto=format&fit=crop&q=80&w=2576&ixlib=rb-4.0.3", // Updated URL
-      matchScore: 85,
-      status: "matched",
-    },
-    {
-      id: 3,
-      type: "lost",
-      title: "Golden Retriever",
-      category: "Pets",
-      location: "Brooklyn Heights",
-      date: "2024-07-09",
-      reward: 500,
-      description: "Friendly golden retriever named Max. Has a red collar.",
-      image: "https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=2562&auto=format&fit=crop",
-      matchScore: 0,
-      status: "active",
-    },
-    {
-      id: 4,
-       type: "found",
-       title: "Blue Backpack",
-       category: "Clothing",
-       location: "Subway Station",
-       date: "2024-07-12",
-       reward: 0,
-       description: "Nike backend found near the ticket counter.",
-       image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=2574&auto=format&fit=crop",
-       matchScore: 40,
-       status: "active"
-    }
-  ];
+  useEffect(() => {
+    const loadItems = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchAllItems();
+        if (data && data.items) {
+          const mappedItems: DashboardItem[] = data.items.map((item: any) => ({
+            id: item._id || String(Math.random()),
+            type: item.type || item.item_type || "lost",
+            title: item.name || item.title || "Unknown Item",
+            category: item.category || "Other",
+            location: item.location || "Unknown location",
+            date: item.date || item.created_at || new Date().toISOString().split("T")[0],
+            reward: item.reward || 0,
+            description: item.description || "No description provided.",
+            image: item.image_url || "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image",
+            matchScore: item.final_score || item.matchScore || 0,
+            status: item.status || "active",
+          }));
+          // Sort items by date descending (newest first)
+          mappedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          setItems(mappedItems.slice(0, 4));
+        }
+      } catch (err: any) {
+        console.error("Failed to load dashboard items:", err);
+        setError("Error loading items. Backend might be unavailable.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const categories = ["Electronics", "Personal Items", "Pets", "Clothing", "Keys", "Documents", "Other"];
-
-  const filteredItems = items.filter((item) => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === "all" || item.category === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
+    loadItems();
+  }, [isBackendOnline]); // re-fetch if backend comes online
 
   const container = {
     hidden: { opacity: 0 },
@@ -184,102 +167,86 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Filters & Search */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-             <Input 
-                placeholder="Search lost or found items..." 
-                className="pl-10 bg-white border-slate-200 shadow-sm h-11 text-slate-900"
-                icon={<Search className="h-4 w-4" />}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-             />
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 md:pb-0">
-             <Button 
-                variant={filterCategory === 'all' ? 'default' : 'outline'} 
-                onClick={() => setFilterCategory('all')}
-                className={filterCategory === 'all' ? '' : 'bg-white border-slate-200 shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50'}
-             >
-                All
-             </Button>
-             {categories.map(cat => (
-                <Button 
-                    key={cat}
-                    variant={filterCategory === cat ? 'default' : 'outline'}
-                    onClick={() => setFilterCategory(cat)}
-                    className={filterCategory === cat ? '' : 'bg-white border-slate-200 shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50'}
-                >
-                    {cat}
-                </Button>
-             ))}
-             <Button variant="outline" size="icon" className="bg-white border-slate-200 shadow-sm text-slate-600 shrink-0 hover:bg-slate-50 hover:text-slate-900">
-                <Filter className="h-4 w-4" />
-             </Button>
-          </div>
+      {/* Header for Newest Items */}
+      <div className="flex justify-between items-end mb-6">
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Newest Lost and Found Items</h2>
       </div>
 
       {/* Grid */}
-      <motion.div 
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-      >
-        {filteredItems.map((item) => (
-            <motion.div key={item.id} variants={itemAnim}>
-                <Card className="overflow-hidden border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group bg-white h-full flex flex-col">
-                    <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                        <img 
-                            src={item.image} 
-                            alt={item.title} 
-                            onError={(e) => {
-                                e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image";
-                            }}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute top-3 left-3 flex gap-2">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md ${
-                                item.type === 'lost' 
-                                ? 'bg-red-500/90 text-white shadow-lg shadow-red-500/20' 
-                                : 'bg-emerald-500/90 text-white shadow-lg shadow-emerald-500/20'
-                            }`}>
-                                {item.type}
-                            </span>
-                             {/* {item.matchScore > 0 && (
-                                <span className="px-2.5 py-1 bg-yellow-400/90 text-yellow-950 rounded-full text-xs font-bold backdrop-blur-md shadow-lg flex items-center gap-1">
-                                    {item.matchScore}% Match
-                                </span>
-                            )} */}
-                        </div>
-                    </div>
-                    <CardContent className="p-4 flex-1 flex flex-col">
-                        <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-[#DD6B20] transition-colors">{item.title}</h3>
-                        </div>
-                        <p className="text-slate-600 text-sm mb-4 line-clamp-2">{item.description}</p>
-                        
-                        <div className="mt-auto space-y-2">
-                             <div className="flex items-center text-xs text-slate-500 font-medium">
-                                <MapPin className="h-3.5 w-3.5 mr-1.5 text-slate-400" />
-                                {item.location}
-                            </div>
-                            <div className="flex items-center text-xs text-slate-500 font-medium">
-                                <Calendar className="h-3.5 w-3.5 mr-1.5 text-slate-400" />
-                                {item.date}
-                            </div>
-                        </div>
-
-                         <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
-                            <Button className="w-full bg-slate-50 text-slate-900 hover:bg-slate-100 shadow-none border border-slate-200">
-                                Details
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            </motion.div>
-        ))}
-      </motion.div>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-20 text-slate-500">
+           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#DD6B20] mr-3"></div>
+           Loading items...
+        </div>
+      ) : error ? (
+        <div className="flex justify-center items-center py-20 text-red-500">
+            {error}
+        </div>
+      ) : items.length === 0 ? (
+        <div className="flex justify-center items-center py-20 text-slate-500">
+            No items found.
+        </div>
+      ) : (
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        >
+          {items.map((item) => (
+              <motion.div key={item.id} variants={itemAnim}>
+                  <Card className="overflow-hidden border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group bg-white h-full flex flex-col">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                          <img 
+                              src={item.image} 
+                              alt={item.title} 
+                              onError={(e) => {
+                                  e.currentTarget.src = "https://placehold.co/600x400/e2e8f0/64748b?text=No+Image";
+                              }}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute top-3 left-3 flex gap-2">
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md ${
+                                  item.type === 'lost' || item.type === 'Lost'
+                                  ? 'bg-red-500/90 text-white shadow-lg shadow-red-500/20' 
+                                  : 'bg-emerald-500/90 text-white shadow-lg shadow-emerald-500/20'
+                              }`}>
+                                  {item.type}
+                              </span>
+                          </div>
+                      </div>
+                      <CardContent className="p-4 flex-1 flex flex-col">
+                          <div className="flex justify-between items-start mb-2">
+                              <h3 className="font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-[#DD6B20] transition-colors">{item.title}</h3>
+                          </div>
+                          <p className="text-slate-600 text-sm mb-4 line-clamp-2">{item.description}</p>
+                          
+                          <div className="mt-auto space-y-2">
+                               <div className="flex items-center text-xs text-slate-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                  <MapPin className="h-3.5 w-3.5 mr-1.5 shrink-0 text-slate-400" />
+                                  <span className="truncate">{item.location}</span>
+                              </div>
+                              <div className="flex items-center text-xs text-slate-500 font-medium">
+                                  <Calendar className="h-3.5 w-3.5 mr-1.5 shrink-0 text-slate-400" />
+                                  {new Date(item.date).toLocaleDateString()}
+                              </div>
+                          </div>
+  
+                           <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
+                              <Link to={`/item/${item.id}`} className="w-full">
+                                <Button 
+                                  className="w-full bg-slate-50 text-slate-900 hover:bg-slate-100 shadow-none border border-slate-200"
+                                >
+                                    Details
+                                </Button>
+                              </Link>
+                          </div>
+                      </CardContent>
+                  </Card>
+              </motion.div>
+          ))}
+        </motion.div>
+      )}
     </DashboardLayout>
   );
 }

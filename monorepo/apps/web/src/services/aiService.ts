@@ -59,14 +59,22 @@ export const checkHealth = async (): Promise<boolean> => {
     }
 };
 
-export const fetchAllItems = async (): Promise<{ items: ItemMatch[] }> => {
+let globalItemsCache: { items: ItemMatch[] } | null = null;
+
+export const fetchAllItems = async (forceRefresh = false): Promise<{ items: ItemMatch[] }> => {
+    if (!forceRefresh && globalItemsCache) {
+        return globalItemsCache;
+    }
+    
     try {
         const response = await fetch(`${API_URL}/items`);
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Failed to fetch items: ${errorText}`);
         }
-        return await response.json();
+        const data = await response.json();
+        globalItemsCache = data;
+        return data;
     } catch (error) {
         console.error("API Error:", error);
         throw error;

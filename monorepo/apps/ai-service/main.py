@@ -74,7 +74,7 @@ def get_image_url(image_path: str) -> Optional[str]:
         p = Path(image_path)
         rel_path = p.relative_to(STORAGE_DIR)
         # For localhost testing. In prod this should be env var
-        return f"http://localhost:8000/static/{rel_path}".replace("\\", "/") # Ensure forward slashes for URL
+        return f"http://localhost:8001/static/{rel_path}".replace("\\", "/") # Ensure forward slashes for URL
     except ValueError:
         return None
 
