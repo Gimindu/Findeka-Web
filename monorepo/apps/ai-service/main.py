@@ -283,3 +283,64 @@ async def get_all_items():
     all_items.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
     
     return {"items": all_items}
+
+# --- User Profile & Settings ---
+
+@app.get("/user/profile")
+async def get_user_profile(uid: str):
+    if db is None:
+         raise HTTPException(status_code=500, detail="Database not connected")
+    user = db["users"].find_one({"firebase_uid": uid})
+    if not user:
+         return {"firebase_uid": uid, "firstName": "New User", "lastName": "", "location": "Unknown", "stats": {"points": 0, "items_found": 0, "matches": 0}}
+    user["_id"] = str(user["_id"])
+    return user
+
+@app.put("/user/profile")
+async def update_user_profile(uid: str, data: dict):
+    if db is None:
+         raise HTTPException(status_code=500, detail="Database not connected")
+    
+    # Exclude _id if present in data
+    if "_id" in data:
+        del data["_id"]
+
+    db["users"].update_one(
+        {"firebase_uid": uid},
+        {"$set": data},
+        upsert=True
+    )
+    return {"status": "success"}
+
+@app.get("/user/settings")
+async def get_user_settings(uid: str):
+    if db is None:
+         raise HTTPException(status_code=500, detail="Database not connected")
+    settings = db["user_settings"].find_one({"firebase_uid": uid})
+    if not settings:
+         return {
+             "firebase_uid": uid, 
+             "emailNotifications": True, 
+             "pushNotifications": True,
+             "matchAlerts": True,
+             "newsletter": False,
+             "publicProfile": True,
+             "locationSharing": False
+         }
+    settings["_id"] = str(settings["_id"])
+    return settings
+
+@app.put("/user/settings")
+async def update_user_settings(uid: str, data: dict):
+    if db is None:
+         raise HTTPException(status_code=500, detail="Database not connected")
+
+    if "_id" in data:
+        del data["_id"]
+
+    db["user_settings"].update_one(
+        {"firebase_uid": uid},
+        {"$set": data},
+        upsert=True
+    )
+    return {"status": "success"}

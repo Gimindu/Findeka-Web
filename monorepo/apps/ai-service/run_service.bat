@@ -24,5 +24,5 @@ if errorlevel 1 (
 echo.
 echo ✅ Setup Complete! Starting Service...
 echo.
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --port 8001
 pause

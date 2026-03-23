@@ -3,10 +3,17 @@ import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { updateUserProfile } from '../../services/aiService';
 
 export default function SignupForm() {
+  const navigate = useNavigate();
+  const { signup } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -23,13 +30,33 @@ export default function SignupForm() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Signup attempt:', formData);
+    if (formData.password !== formData.confirmPassword) {
+      return setError('Passwords do not match');
+    }
+    setError('');
+    setLoading(true);
+    try {
+      const userCredential = await signup(formData.email, formData.password);
+      // Save profile logic via backend
+      await updateUserProfile(userCredential.user.uid, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        email: formData.email
+      });
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 py-4">
+      {error && <div className="p-3 bg-red-100 text-red-600 rounded-md text-sm">{error}</div>}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="firstName">First Name</Label>
@@ -131,8 +158,8 @@ export default function SignupForm() {
         </div>
       </div>
 
-      <Button type="submit" className="w-full h-11 text-base shadow-orange-100">
-        Create Account
+      <Button type="submit" className="w-full h-11 text-base shadow-orange-100" disabled={loading}>
+        {loading ? 'Creating Account...' : 'Create Account'}
       </Button>
     </form>
   );

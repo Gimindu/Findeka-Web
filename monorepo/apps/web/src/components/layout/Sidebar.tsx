@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   Home, 
   Search, 
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useAuth } from "../../contexts/AuthContext";
 
 const sidebarItems = [
   { icon: Home, label: "Dashboard", href: "/dashboard" },
@@ -22,6 +23,13 @@ const sidebarItems = [
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/auth');
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white/80 backdrop-blur-xl transition-transform">
@@ -72,7 +80,7 @@ export function Sidebar() {
         </ul>
 
         <div className="mt-auto border-t border-slate-200 pt-4">
-           <button className="flex w-full items-center rounded-lg p-3 text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors group">
+           <button onClick={handleLogout} className="flex w-full items-center rounded-lg p-3 text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors group">
               <LogOut className="h-5 w-5 flex-shrink-0 text-slate-500 group-hover:text-red-600 transition-colors" />
               <span className="ml-3">Sign Out</span>
            </button>

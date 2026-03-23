@@ -4,10 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -20,14 +24,36 @@ export default function LoginForm() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', formData);
-    navigate('/dashboard');
+    setError('');
+    setLoading(true);
+    try {
+      await login(formData.email, formData.password);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAutoLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await login('genuka56@gmail.com', 'findEkapassword_123');
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to auto login');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 py-4">
+      {error && <div className="p-3 bg-red-100 text-red-600 rounded-md text-sm">{error}</div>}
       <div className="space-y-2">
         <Label htmlFor="email">Email Address</Label>
         <Input
@@ -80,8 +106,8 @@ export default function LoginForm() {
         </a>
       </div>
 
-      <Button type="submit" className="w-full h-11 text-base shadow-orange-100">
-        Sign In
+      <Button type="submit" className="w-full h-11 text-base shadow-orange-100" disabled={loading}>
+        {loading ? 'Please wait...' : 'Sign In'}
       </Button>
       
       <div className="relative my-4">
@@ -97,7 +123,8 @@ export default function LoginForm() {
         type="button" 
         variant="outline" 
         className="w-full h-11 text-base border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700"
-        onClick={() => navigate('/dashboard')}
+        onClick={handleAutoLogin}
+        disabled={loading}
       >
         Auto Login (Demo)
       </Button>

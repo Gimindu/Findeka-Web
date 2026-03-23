@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_URL = "http://localhost:8001";
 
 export interface ItemMatch {
     _id: string;
@@ -71,5 +71,39 @@ export const fetchAllItems = async (): Promise<{ items: ItemMatch[] }> => {
         console.error("API Error:", error);
         throw error;
     }
+};
+
+// --- User Profile & Settings ---
+
+export const getUserProfile = async (uid: string) => {
+    const res = await fetch(`${API_URL}/user/profile?uid=${uid}`);
+    if (!res.ok) throw new Error("Failed to fetch profile");
+    return res.json();
+};
+
+export const updateUserProfile = async (uid: string, data: any) => {
+    const res = await fetch(`${API_URL}/user/profile?uid=${uid}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update profile");
+    return res.json();
+};
+
+export const getUserSettings = async (uid: string) => {
+    const res = await fetch(`${API_URL}/user/settings?uid=${uid}`);
+    if (!res.ok) throw new Error("Failed to fetch settings");
+    return res.json();
+};
+
+export const updateUserSettings = async (uid: string, data: any) => {
+    const res = await fetch(`${API_URL}/user/settings?uid=${uid}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update settings");
+    return res.json();
 };
 
