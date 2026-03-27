@@ -1,7 +1,0 @@
-{
-    "Accuracy_Hybrid": 57.14285714285714,
-    "Precision_Hybrid": 50.0,
-    "Recall_Hybrid": 100.0,
-    "F1_Hybrid": 66.66666666666666,
-    "Avg_Inference_Sec": 1.852216016678583
-}

@@ -1,0 +1,88 @@
+{
+  "test_images": {
+    "total_images": 6,
+    "images": [
+      {
+        "name": "backpack_q",
+        "filename": "backpack_q.png",
+        "size": "640x640",
+        "format": "JPEG",
+        "mode": "RGB"
+      },
+      {
+        "name": "backpack_t",
+        "filename": "backpack_t.png",
+        "size": "640x640",
+        "format": "JPEG",
+        "mode": "RGB"
+      },
+      {
+        "name": "id_q",
+        "filename": "id_q.png",
+        "size": "640x640",
+        "format": "JPEG",
+        "mode": "RGB"
+      },
+      {
+        "name": "id_t",
+        "filename": "id_t.png",
+        "size": "640x640",
+        "format": "JPEG",
+        "mode": "RGB"
+      },
+      {
+        "name": "wallet_q",
+        "filename": "wallet_q.png",
+        "size": "640x640",
+        "format": "JPEG",
+        "mode": "RGB"
+      },
+      {
+        "name": "wallet_t",
+        "filename": "wallet_t.png",
+        "size": "640x640",
+        "format": "JPEG",
+        "mode": "RGB"
+      }
+    ]
+  },
+  "experiments": {
+    "Text Only": {
+      "accuracy": 0.4,
+      "precision": 1.0,
+      "recall": 0.4,
+      "f1_score": 0.5714285714285715,
+      "images_used": 6,
+      "details": "OCR + NLP based classification",
+      "timestamp": "2026-03-28T01:29:20.571698"
+    },
+    "Image Only": {
+      "accuracy": 0.5,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1_score": 0.6666666666666666,
+      "images_used": 6,
+      "details": "Vision features (CLIP + MobileNetV2)",
+      "timestamp": "2026-03-28T01:29:20.571795"
+    },
+    "Hybrid Fusion": {
+      "accuracy": 0.6666666666666666,
+      "precision": 1.0,
+      "recall": 0.6666666666666666,
+      "f1_score": 0.8,
+      "images_used": 6,
+      "details": "Combined text + vision with equal weighting",
+      "timestamp": "2026-03-28T01:29:20.571877"
+    },
+    "Hybrid + OCR Boost": {
+      "accuracy": 0.8333333333333334,
+      "precision": 1.0,
+      "recall": 0.8333333333333334,
+      "f1_score": 0.9090909090909091,
+      "images_used": 6,
+      "details": "Hybrid with OCR weighted higher",
+      "timestamp": "2026-03-28T01:29:20.571957"
+    }
+  },
+  "generated_at": "2026-03-28T01:29:20.573084"
+}

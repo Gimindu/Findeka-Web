@@ -1,0 +1,44 @@
+{
+  "backpack_q": {
+    "label": "backpack",
+    "description": "Lost silver/gray backpack with laptop compartment",
+    "color": "silver",
+    "category": "bag",
+    "brand": "unknown"
+  },
+  "backpack_t": {
+    "label": "backpack",
+    "description": "Found brown leather backpack in good condition",
+    "color": "brown",
+    "category": "bag",
+    "brand": "unknown"
+  },
+  "id_q": {
+    "label": "id",
+    "description": "Lost government ID card with photo",
+    "color": "blue",
+    "category": "document",
+    "brand": "government"
+  },
+  "id_t": {
+    "label": "id",
+    "description": "Found ID card at lost and found desk",
+    "color": "green",
+    "category": "document",
+    "brand": "government"
+  },
+  "wallet_q": {
+    "label": "wallet",
+    "description": "Lost black leather wallet with cards",
+    "color": "black",
+    "category": "accessory",
+    "brand": "unknown"
+  },
+  "wallet_t": {
+    "label": "wallet",
+    "description": "Found brown leather wallet with cash inside",
+    "color": "brown",
+    "category": "accessory",
+    "brand": "unknown"
+  }
+}

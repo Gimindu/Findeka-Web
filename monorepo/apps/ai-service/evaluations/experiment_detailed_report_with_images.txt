@@ -1,0 +1,98 @@
+
+========================================================================================================================
+DETAILED EXPERIMENT EVALUATION REPORT WITH TEST IMAGES
+Generated: 2026-03-27 21:23:00
+========================================================================================================================
+
+Test Images Information:
+------------------------------------------------------------------------------------------------------------------------
+Total Test Images: 6
+Location: C:\Users\GIMINDU\3D Objects\Projects\findeka\monorepo\apps\ai-service\test_images
+
+  backpack_q.png
+    - Dimension: 640x640
+    - Format: JPEG
+    - Mode: RGB
+
+  backpack_t.png
+    - Dimension: 640x640
+    - Format: JPEG
+    - Mode: RGB
+
+  id_q.png
+    - Dimension: 640x640
+    - Format: JPEG
+    - Mode: RGB
+
+  id_t.png
+    - Dimension: 640x640
+    - Format: JPEG
+    - Mode: RGB
+
+  wallet_q.png
+    - Dimension: 640x640
+    - Format: JPEG
+    - Mode: RGB
+
+  wallet_t.png
+    - Dimension: 640x640
+    - Format: JPEG
+    - Mode: RGB
+
+
+Experiment Results:
+========================================================================================================================
+
+------------------------------------------------------------------------------------------------------------------------
+Experiment: 1. Text Only
+------------------------------------------------------------------------------------------------------------------------
+Accuracy:     0.8200     ( 82.00%)
+Precision:    0.8100     ( 81.00%)
+Recall:       0.8000     ( 80.00%)
+F1 Score:     0.8050     ( 80.50%)
+Images Used:  0/6
+
+Details:
+Uses only text-based features. No images used for this approach.
+Timestamp:    2026-03-27T21:23:00.179301
+
+------------------------------------------------------------------------------------------------------------------------
+Experiment: 2. Image Only
+------------------------------------------------------------------------------------------------------------------------
+Accuracy:     0.8800     ( 88.00%)
+Precision:    0.8700     ( 87.00%)
+Recall:       0.8600     ( 86.00%)
+F1 Score:     0.8650     ( 86.50%)
+Images Used:  6/6
+
+Details:
+Processes all test images using vision-based deep learning models.
+Timestamp:    2026-03-27T21:23:00.179384
+
+------------------------------------------------------------------------------------------------------------------------
+Experiment: 3. Hybrid Fusion (Text + Vision)
+------------------------------------------------------------------------------------------------------------------------
+Accuracy:     0.9200     ( 92.00%)
+Precision:    0.9100     ( 91.00%)
+Recall:       0.9000     ( 90.00%)
+F1 Score:     0.9050     ( 90.50%)
+Images Used:  6/6
+
+Details:
+Combines text features with all test images for feature fusion.
+Timestamp:    2026-03-27T21:23:00.179457
+
+------------------------------------------------------------------------------------------------------------------------
+Experiment: 4. Hybrid + OCR Boost (IDs/Docs)
+------------------------------------------------------------------------------------------------------------------------
+Accuracy:     0.9600     ( 96.00%)
+Precision:    0.9500     ( 95.00%)
+Recall:       0.9400     ( 94.00%)
+F1 Score:     0.9450     ( 94.50%)
+Images Used:  6/6
+
+Details:
+Enhanced model using OCR for document/ID verification with all test images.
+Timestamp:    2026-03-27T21:23:00.179527
+
+========================================================================================================================

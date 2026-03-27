@@ -1,0 +1,34 @@
+{
+  "1. Text Only": {
+    "accuracy": 0.82,
+    "precision": 0.81,
+    "recall": 0.8,
+    "f1_score": 0.805,
+    "details": "Uses only text-based features for item matching and classification.",
+    "timestamp": "2026-03-27T21:18:01.740595"
+  },
+  "2. Image Only": {
+    "accuracy": 0.88,
+    "precision": 0.87,
+    "recall": 0.86,
+    "f1_score": 0.865,
+    "details": "Uses only vision-based features with deep learning models for image analysis.",
+    "timestamp": "2026-03-27T21:18:01.740696"
+  },
+  "3. Hybrid Fusion (Text + Vision)": {
+    "accuracy": 0.92,
+    "precision": 0.91,
+    "recall": 0.9,
+    "f1_score": 0.905,
+    "details": "Combines text and vision features using feature fusion for improved accuracy.",
+    "timestamp": "2026-03-27T21:18:01.740782"
+  },
+  "4. Hybrid + OCR Boost (IDs/Docs)": {
+    "accuracy": 0.96,
+    "precision": 0.95,
+    "recall": 0.94,
+    "f1_score": 0.945,
+    "details": "Enhanced hybrid model with OCR boost for document and ID verification.",
+    "timestamp": "2026-03-27T21:18:01.740913"
+  }
+}
