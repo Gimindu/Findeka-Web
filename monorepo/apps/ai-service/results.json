@@ -3,5 +3,5 @@
     "Precision": 60.0,
     "Recall": 100.0,
     "F1": 75.0,
-    "Avg_Inference_Sec": 0.10509954889615376
+    "Avg_Inference_Sec": 0.10743857423464458
 }
