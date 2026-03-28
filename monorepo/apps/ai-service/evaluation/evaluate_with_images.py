@@ -153,7 +153,7 @@ class ExperimentEvaluatorWithImages:
         table += "Test Images Used:\n"
         table += "-" * 120 + "\n"
         for img_info in image_stats['images']:
-            table += f"  • {img_info['filename']:<30} | Size: {img_info['size']:<12} | Format: {img_info['format']}\n"
+            table += f"  * {img_info['filename']:<30} | Size: {img_info['size']:<12} | Format: {img_info['format']}\n"
         table += "-" * 120 + "\n\n"
         
         # Comparison table header
@@ -221,7 +221,7 @@ class ExperimentEvaluatorWithImages:
         output_path = self.output_dir / filename
         
         try:
-            with open(output_path, 'w') as f:
+            with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(self.generate_comparison_table())
             logger.info(f"Comparison table saved to: {output_path}")
             return output_path
@@ -234,7 +234,7 @@ class ExperimentEvaluatorWithImages:
         output_path = self.output_dir / filename
         
         try:
-            with open(output_path, 'w') as f:
+            with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(self.generate_detailed_report())
             logger.info(f"Detailed report saved to: {output_path}")
             return output_path
@@ -253,8 +253,8 @@ class ExperimentEvaluatorWithImages:
         }
         
         try:
-            with open(output_path, 'w') as f:
-                json.dump(data, f, indent=2, default=str)
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, default=str, ensure_ascii=False)
             logger.info(f"JSON results saved to: {output_path}")
             return output_path
         except Exception as e:

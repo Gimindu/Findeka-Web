@@ -1,7 +1,7 @@
 
 ========================================================================================================================
 DETAILED EXPERIMENT EVALUATION REPORT WITH TEST IMAGES
-Generated: 2026-03-27 23:52:02
+Generated: 2026-03-29 02:13:46
 ========================================================================================================================
 
 Test Images Information:
@@ -44,55 +44,81 @@ Experiment Results:
 ========================================================================================================================
 
 ------------------------------------------------------------------------------------------------------------------------
-Experiment: 1. Text Only
+Experiment: Text Only
 ------------------------------------------------------------------------------------------------------------------------
-Accuracy:     0.8200     ( 82.00%)
-Precision:    0.8100     ( 81.00%)
-Recall:       0.8000     ( 80.00%)
-F1 Score:     0.8050     ( 80.50%)
-Images Used:  0/6
+Accuracy:     1.0000     (100.00%)
+Precision:    1.0000     (100.00%)
+Recall:       1.0000     (100.00%)
+F1 Score:     1.0000     (100.00%)
+Images Used:  3/6
 
 Details:
-Uses only text-based features. No images used for this approach.
-Timestamp:    2026-03-27T23:52:02.019588
+BERT(query description) vs BERT(OCR from target photo). Text-only matching: fails when found items show no readable text. AvgMatchScore=0.751 | AvgMargin=+0.200
+Timestamp:    2026-03-29T02:13:46.170772
 
 ------------------------------------------------------------------------------------------------------------------------
-Experiment: 2. Image Only
+Experiment: Image Only
 ------------------------------------------------------------------------------------------------------------------------
-Accuracy:     0.8800     ( 88.00%)
-Precision:    0.8700     ( 87.00%)
-Recall:       0.8600     ( 86.00%)
-F1 Score:     0.8650     ( 86.50%)
-Images Used:  6/6
-
-Details:
-Processes all test images using vision-based deep learning models.
-Timestamp:    2026-03-27T23:52:02.019737
-
-------------------------------------------------------------------------------------------------------------------------
-Experiment: 3. Hybrid Fusion (Text + Vision)
-------------------------------------------------------------------------------------------------------------------------
-Accuracy:     0.9200     ( 92.00%)
-Precision:    0.9100     ( 91.00%)
-Recall:       0.9000     ( 90.00%)
-F1 Score:     0.9050     ( 90.50%)
-Images Used:  6/6
+Accuracy:     1.0000     (100.00%)
+Precision:    1.0000     (100.00%)
+Recall:       1.0000     (100.00%)
+F1 Score:     1.0000     (100.00%)
+Images Used:  3/6
 
 Details:
-Combines text features with all test images for feature fusion.
-Timestamp:    2026-03-27T23:52:02.019862
+CLIP image embedding similarity: query photo vs target photo. No text features used. AvgMatchScore=0.588 | AvgMargin=+0.092
+Timestamp:    2026-03-29T02:13:46.170888
 
 ------------------------------------------------------------------------------------------------------------------------
-Experiment: 4. Hybrid + OCR Boost (IDs/Docs)
+Experiment: Hybrid Fusion
 ------------------------------------------------------------------------------------------------------------------------
-Accuracy:     0.9600     ( 96.00%)
-Precision:    0.9500     ( 95.00%)
-Recall:       0.9400     ( 94.00%)
-F1 Score:     0.9450     ( 94.50%)
-Images Used:  6/6
+Accuracy:     1.0000     (100.00%)
+Precision:    1.0000     (100.00%)
+Recall:       1.0000     (100.00%)
+F1 Score:     1.0000     (100.00%)
+Images Used:  3/6
 
 Details:
-Enhanced model using OCR for document/ID verification with all test images.
-Timestamp:    2026-03-27T23:52:02.019980
+CLIP image-to-image (base) + 0.3 Ã— CLIP cross-modal (query text description ? target image). Additive design: margin strictly >= Image Only when both modalities agree. AvgMatchScore=0.819 | AvgMargin=+0.258
+Timestamp:    2026-03-29T02:13:46.170992
+
+------------------------------------------------------------------------------------------------------------------------
+Experiment: Hybrid + OCR Boost
+------------------------------------------------------------------------------------------------------------------------
+Accuracy:     1.0000     (100.00%)
+Precision:    1.0000     (100.00%)
+Recall:       1.0000     (100.00%)
+F1 Score:     1.0000     (100.00%)
+Images Used:  3/6
+
+Details:
+Hybrid base (CLIP image + 0.3Ã—CLIP cross-modal) + keyword-overlap OCR bonus: fraction of query content words found literally in target OCR, scaled by 0.4. Keyword matching avoids spurious BERT boosts from common words like LOST/FOUND in background signage. AvgMatchScore=0.852 | AvgMargin=+0.291
+Timestamp:    2026-03-29T02:13:46.171096
+
+------------------------------------------------------------------------------------------------------------------------
+Experiment: Image Only (Degraded Photo)
+------------------------------------------------------------------------------------------------------------------------
+Accuracy:     0.6667     ( 66.67%)
+Precision:    0.6667     ( 66.67%)
+Recall:       0.6667     ( 66.67%)
+F1 Score:     0.6667     ( 66.67%)
+Images Used:  3/6
+
+Details:
+CONDITION 2A: Image Only with query CLIP embedding corrupted by Gaussian noise (noise_factor=10.0, SNR~=0.17, seed=42), simulating a blurry or dark query photo. Shows image-only matching collapses under poor photo quality. AvgMatchScore=0.064 | AvgMargin=+0.020
+Timestamp:    2026-03-29T02:13:46.171194
+
+------------------------------------------------------------------------------------------------------------------------
+Experiment: Hybrid Fusion (Degraded Photo)
+------------------------------------------------------------------------------------------------------------------------
+Accuracy:     1.0000     (100.00%)
+Precision:    1.0000     (100.00%)
+Recall:       1.0000     (100.00%)
+F1 Score:     1.0000     (100.00%)
+Images Used:  3/6
+
+Details:
+CONDITION 2B: Same image degradation as 2A, but CLIP cross-modal (typed text description -> target image) is intact. Text description RESCUES the match: Hybrid recovers to 100%. AvgMatchScore=0.335 | AvgMargin=+0.080
+Timestamp:    2026-03-29T02:13:46.171299
 
 ========================================================================================================================
