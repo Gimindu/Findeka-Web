@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -8,6 +8,8 @@ import {
   ShieldAlert,
   LogOut,
   Search,
+  Menu,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -34,6 +36,7 @@ export default function AdminLayout({
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -42,16 +45,31 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <aside className="fixed left-0 top-0 z-40 h-screen w-72 border-r border-slate-200 bg-white/90 backdrop-blur-xl">
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-40 h-screen w-72 border-r border-slate-200 bg-white/90 backdrop-blur-xl transition-transform duration-300 md:translate-x-0",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
         <div className="flex h-full flex-col px-4 py-5">
-          <div className="mb-8 flex items-center pl-2">
-            <div className="mr-3 rounded-lg bg-[#DD6B20] p-2 shadow-lg shadow-orange-500/25">
-              <Search className="h-6 w-6 text-white" />
+          <div className="mb-8 flex items-center justify-between pl-2">
+            <div className="flex items-center">
+              <div className="mr-3 rounded-lg bg-[#DD6B20] p-2 shadow-lg shadow-orange-500/25">
+                <Search className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-xl font-bold leading-none">Findeka</p>
+                <p className="text-xs text-slate-500">Administration</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xl font-bold leading-none">Findeka</p>
-              <p className="text-xs text-slate-500">Administration</p>
-            </div>
+            <button
+              type="button"
+              className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+              aria-label="Close admin navigation"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           <ul className="space-y-1.5 flex-1">
@@ -62,6 +80,7 @@ export default function AdminLayout({
                 <li key={item.href}>
                   <Link
                     to={item.href}
+                    onClick={() => setIsSidebarOpen(false)}
                     className={cn(
                       "flex items-center rounded-lg px-3 py-2.5 transition-colors",
                       isActive
@@ -92,9 +111,28 @@ export default function AdminLayout({
         </div>
       </aside>
 
-      <div className="p-4 sm:ml-72">
-        <header className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+      {isSidebarOpen ? (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      ) : null}
+
+      <div className="p-3 sm:p-4 md:ml-72">
+        <header className="mb-6 rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 md:hidden"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open admin navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+              {title}
+            </h1>
+          </div>
           {subtitle ? (
             <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
           ) : null}

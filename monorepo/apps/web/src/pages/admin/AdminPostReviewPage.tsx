@@ -147,7 +147,7 @@ export default function AdminPostReviewPage() {
                       <p className="text-sm font-medium text-emerald-800">
                         Do you want to approve this post?
                       </p>
-                      <div className="mt-2 flex gap-2">
+                      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                         <Button
                           onClick={() => onApproveConfirmed(item._id)}
                           disabled={busyId === item._id}

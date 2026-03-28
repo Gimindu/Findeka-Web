@@ -81,9 +81,11 @@ export default function NotificationPage() {
   return (
     <DashboardLayout>
       <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800">Notifications</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
+              Notifications
+            </h1>
             <p className="text-slate-500">
               Stay updated with your latest activity.
             </p>
@@ -91,7 +93,7 @@ export default function NotificationPage() {
           <Button
             variant="outline"
             size="sm"
-            className="text-slate-600"
+            className="w-full sm:w-auto text-slate-600"
             onClick={handleMarkAllRead}
             disabled={unreadCount === 0}
           >

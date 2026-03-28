@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Sidebar } from "./Sidebar";
-import { Bell, User } from "lucide-react";
+import { Bell, Menu, User } from "lucide-react";
 import { Button } from "../ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState("User");
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const loadProfileName = async () => {
@@ -64,11 +65,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <Sidebar />
-      <div className="p-4 sm:ml-64">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      {isSidebarOpen ? (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      ) : null}
+      <div className="p-3 sm:p-4 md:ml-64">
         {/* Header */}
         <header className="mb-6 flex items-center justify-between rounded-xl bg-white/80 p-4 shadow-sm backdrop-blur-xl border border-white/20">
-          <h2 className="text-xl font-semibold text-slate-800">Overview</h2>
+          <div className="flex items-center gap-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="md:hidden"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open navigation"
+            >
+              <Menu className="h-5 w-5 text-slate-600" />
+            </Button>
+            <h2 className="text-lg sm:text-xl font-semibold text-slate-800">
+              Overview
+            </h2>
+          </div>
 
           <div className="flex items-center gap-4">
             <Link to="/notifications">

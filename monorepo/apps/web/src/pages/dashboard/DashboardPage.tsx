@@ -141,8 +141,8 @@ export default function DashboardPage() {
       <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-gradient-to-r from-[#DD6B20] to-[#FF8C42] rounded-2xl p-8 text-white relative overflow-hidden shadow-lg shadow-orange-500/20">
           <div className="relative z-10">
-            <div className="flex justify-between items-start mb-2">
-              <h1 className="text-3xl font-bold">
+            <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <h1 className="text-2xl sm:text-3xl font-bold">
                 Welcome back, {displayName}!
               </h1>
 
@@ -177,11 +177,11 @@ export default function DashboardPage() {
               You have 2 items with potential matches today. Check them out to
               reunite with your belongings.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Link to="/report-item">
                 <Button
                   variant="secondary"
-                  className="bg-slate-100 text-orange-700 hover:bg-white border-none"
+                  className="w-full sm:w-auto bg-slate-100 text-orange-700 hover:bg-white border-none"
                 >
                   <Plus className="mr-2 h-4 w-4" /> Report New Item
                 </Button>
@@ -189,7 +189,7 @@ export default function DashboardPage() {
               <Link to="/search">
                 <Button
                   variant="outline"
-                  className="bg-orange-600/20 border-white/20 text-white hover:bg-orange-600/30 hover:text-white backdrop-blur-sm"
+                  className="w-full sm:w-auto bg-orange-600/20 border-white/20 text-white hover:bg-orange-600/30 hover:text-white backdrop-blur-sm"
                 >
                   View All Activity
                 </Button>
@@ -237,7 +237,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Header for Newest Items */}
-      <div className="flex justify-between items-end mb-6">
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
           Newest Lost and Found Items
         </h2>

@@ -150,7 +150,7 @@ export default function ItemDetailsPage() {
                 </div>
               </div>
 
-              <div className="p-8 lg:col-span-2 flex flex-col h-full border-l border-slate-100">
+              <div className="p-5 sm:p-8 lg:col-span-2 flex flex-col h-full border-t lg:border-t-0 lg:border-l border-slate-100">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-sm font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-md">
@@ -232,7 +232,7 @@ export default function ItemDetailsPage() {
                         className="w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         rows={3}
                       />
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row">
                         <Button
                           type="button"
                           className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"

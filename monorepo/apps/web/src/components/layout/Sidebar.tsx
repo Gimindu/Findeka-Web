@@ -8,6 +8,7 @@ import {
   LogOut,
   PlusCircle,
   Shield,
+  X,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -22,7 +23,12 @@ const sidebarItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, isAdmin } = useAuth();
@@ -33,19 +39,35 @@ export function Sidebar() {
 
   const handleLogout = async () => {
     await logout();
+    onClose?.();
     navigate("/auth");
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white/80 backdrop-blur-xl transition-transform">
+    <aside
+      className={cn(
+        "fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white/80 backdrop-blur-xl transition-transform duration-300 md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full",
+      )}
+    >
       <div className="flex h-full flex-col px-3 py-4">
-        <div className="mb-10 flex items-center pl-3">
-          <div className="flex bg-[#DD6B20] p-2 rounded-lg mr-3 shadow-lg shadow-orange-500/20">
-            <Search className="h-6 w-6 text-white" />
+        <div className="mb-10 flex items-center justify-between pl-3">
+          <div className="flex items-center">
+            <div className="flex bg-[#DD6B20] p-2 rounded-lg mr-3 shadow-lg shadow-orange-500/20">
+              <Search className="h-6 w-6 text-white" />
+            </div>
+            <span className="self-center text-xl font-bold whitespace-nowrap">
+              Findeka
+            </span>
           </div>
-          <span className="self-center text-xl font-bold whitespace-nowrap">
-            Findeka
-          </span>
+          <button
+            type="button"
+            onClick={() => onClose?.()}
+            className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 md:hidden"
+            aria-label="Close navigation"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         <ul className="space-y-2 font-medium flex-1">
@@ -55,6 +77,7 @@ export function Sidebar() {
               <li key={item.href}>
                 <Link
                   to={item.href}
+                  onClick={() => onClose?.()}
                   className={cn(
                     "relative flex items-center rounded-lg p-3 group transition-colors",
                     isActive

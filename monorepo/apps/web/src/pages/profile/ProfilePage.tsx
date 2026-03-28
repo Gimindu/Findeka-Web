@@ -169,7 +169,7 @@ export default function ProfilePage() {
 
             <Button
               onClick={() => navigate("/settings")}
-              className="bg-[#DD6B20] hover:bg-[#C05615]"
+              className="w-full md:w-auto bg-[#DD6B20] hover:bg-[#C05615]"
             >
               <Edit className="mr-2 h-4 w-4" /> Edit Profile
             </Button>
@@ -462,7 +462,7 @@ export default function ProfilePage() {
                 Are you sure you want to permanently delete this item? This
                 action cannot be undone.
               </p>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <Button
                   variant="outline"
                   className="flex-1"

@@ -204,7 +204,7 @@ export default function ReportItemPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-8 bg-slate-100 border border-slate-200 p-1 rounded-xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-8 bg-slate-100 border border-slate-200 p-1 rounded-xl">
           <button
             type="button"
             onClick={() => setPostType("lost")}
@@ -388,7 +388,7 @@ export default function ReportItemPage() {
                 </div>
 
                 {postData.photos.length > 0 && (
-                  <div className="grid grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 sm:gap-4">
                     {postData.photos.map((photo, index) => (
                       <div
                         key={index}
@@ -510,13 +510,13 @@ export default function ReportItemPage() {
                   ))}
                 </div>
 
-                <div className="p-6 bg-slate-50 border-t flex items-center justify-between">
+                <div className="p-6 bg-slate-50 border-t flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-slate-500">
                     None of these match my item.
                   </p>
                   <Button
                     onClick={handleNoMatch}
-                    className="bg-slate-900 text-white hover:bg-slate-800"
+                    className="w-full sm:w-auto bg-slate-900 text-white hover:bg-slate-800"
                   >
                     Submit My Report Anyway{" "}
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -563,7 +563,7 @@ export default function ReportItemPage() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="font-semibold text-slate-700">
                         Category:
@@ -611,7 +611,7 @@ export default function ReportItemPage() {
                     </p>
                   </div>
 
-                  <div className="pt-4 flex gap-3">
+                  <div className="pt-4 flex flex-col gap-3 sm:flex-row">
                     <a
                       href={`tel:${selectedMatch.phone || "+94701234567"}`}
                       className="flex-1 flex"

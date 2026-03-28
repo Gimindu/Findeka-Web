@@ -176,7 +176,7 @@ export default function SearchPage() {
                     <label className="text-sm font-medium text-slate-700">
                       Type
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {TYPES.map((type) => (
                         <button
                           key={type}

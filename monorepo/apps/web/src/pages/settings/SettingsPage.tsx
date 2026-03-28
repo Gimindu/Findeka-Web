@@ -196,7 +196,7 @@ export default function SettingsPage() {
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-[#DD6B20] hover:bg-[#C05615] text-white"
+                className="w-full sm:w-auto bg-[#DD6B20] hover:bg-[#C05615] text-white"
               >
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
@@ -240,7 +240,7 @@ export default function SettingsPage() {
             ].map((item) => (
               <div
                 key={item.key}
-                className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0"
+                className="flex flex-col gap-3 py-2 border-b border-slate-50 last:border-0 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="space-y-0.5">
                   <h4 className="text-sm font-medium text-slate-900">
@@ -288,7 +288,7 @@ export default function SettingsPage() {
             ].map((item) => (
               <div
                 key={item.key}
-                className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0"
+                className="flex flex-col gap-3 py-2 border-b border-slate-50 last:border-0 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="space-y-0.5">
                   <h4 className="text-sm font-medium text-slate-900">
@@ -307,7 +307,7 @@ export default function SettingsPage() {
                 </label>
               </div>
             ))}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+            <div className="pt-4 border-t border-slate-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-0.5">
                 <h4 className="text-sm font-medium text-slate-900">
                   Change Password
@@ -323,11 +323,11 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end pt-6">
+        <div className="flex justify-stretch sm:justify-end pt-6">
           <Button
             onClick={handleLogout}
             variant="ghost"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50"
           >
             <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>
@@ -342,7 +342,7 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            className="fixed bottom-6 right-6 z-[100] bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3"
+            className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-[100] bg-slate-900 text-white px-4 sm:px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3"
           >
             <CheckCircle2 className="h-6 w-6 text-emerald-400" />
             <span className="font-medium">{successMsg}</span>
