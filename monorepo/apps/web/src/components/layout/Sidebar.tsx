@@ -1,12 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { 
-  Home, 
-  Search, 
-  MessageSquare, 
-  Trophy, 
-  Settings, 
+import {
+  Home,
+  Search,
+  MessageSquare,
+  Trophy,
+  Settings,
   LogOut,
-  PlusCircle
+  PlusCircle,
+  Shield,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -24,11 +25,15 @@ const sidebarItems = [
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
+
+  const navItems = isAdmin
+    ? [...sidebarItems, { icon: Shield, label: "Admin Panel", href: "/admin" }]
+    : sidebarItems;
 
   const handleLogout = async () => {
     await logout();
-    navigate('/auth');
+    navigate("/auth");
   };
 
   return (
@@ -36,15 +41,15 @@ export function Sidebar() {
       <div className="flex h-full flex-col px-3 py-4">
         <div className="mb-10 flex items-center pl-3">
           <div className="flex bg-[#DD6B20] p-2 rounded-lg mr-3 shadow-lg shadow-orange-500/20">
-             <Search className="h-6 w-6 text-white" />
+            <Search className="h-6 w-6 text-white" />
           </div>
           <span className="self-center text-xl font-bold whitespace-nowrap">
             Findeka
           </span>
         </div>
-        
+
         <ul className="space-y-2 font-medium flex-1">
-          {sidebarItems.map((item) => {
+          {navItems.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <li key={item.href}>
@@ -52,9 +57,9 @@ export function Sidebar() {
                   to={item.href}
                   className={cn(
                     "relative flex items-center rounded-lg p-3 group transition-colors",
-                    isActive 
-                      ? "text-[#DD6B20]" 
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/50"
+                    isActive
+                      ? "text-[#DD6B20]"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/50",
                   )}
                 >
                   {isActive && (
@@ -66,12 +71,19 @@ export function Sidebar() {
                       exit={{ opacity: 0 }}
                     />
                   )}
-                  <item.icon className={cn("h-5 w-5 flex-shrink-0 z-10 transition-colors", isActive ? "text-[#DD6B20]" : "text-slate-500 group-hover:text-slate-900")} />
+                  <item.icon
+                    className={cn(
+                      "h-5 w-5 flex-shrink-0 z-10 transition-colors",
+                      isActive
+                        ? "text-[#DD6B20]"
+                        : "text-slate-500 group-hover:text-slate-900",
+                    )}
+                  />
                   <span className="ml-3 z-10">{item.label}</span>
                   {item.label === "Messages" && (
-                     <span className="ml-auto bg-orange-100 text-orange-600 py-0.5 px-2 rounded-full text-xs font-medium z-10">
-                        3
-                     </span>
+                    <span className="ml-auto bg-orange-100 text-orange-600 py-0.5 px-2 rounded-full text-xs font-medium z-10">
+                      3
+                    </span>
                   )}
                 </Link>
               </li>
@@ -80,10 +92,13 @@ export function Sidebar() {
         </ul>
 
         <div className="mt-auto border-t border-slate-200 pt-4">
-           <button onClick={handleLogout} className="flex w-full items-center rounded-lg p-3 text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors group">
-              <LogOut className="h-5 w-5 flex-shrink-0 text-slate-500 group-hover:text-red-600 transition-colors" />
-              <span className="ml-3">Sign Out</span>
-           </button>
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center rounded-lg p-3 text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors group"
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0 text-slate-500 group-hover:text-red-600 transition-colors" />
+            <span className="ml-3">Sign Out</span>
+          </button>
         </div>
       </div>
     </aside>

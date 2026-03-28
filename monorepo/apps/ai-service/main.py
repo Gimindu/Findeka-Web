@@ -8,6 +8,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 from pydantic import BaseModel
 
 from models_loader import model_manager
@@ -26,6 +27,16 @@ async def lifespan(app: FastAPI):
     try:
         client = MongoClient(MONGO_URI)
         db = client[DB_NAME]
+        # Enforce: one user can only report the same item once.
+        db["reports"].create_index(
+            [("item_id", 1), ("reporter_uid", 1)],
+            unique=True,
+            name="uniq_item_reporter"
+        )
+        db["notifications"].create_index(
+            [("uid", 1), ("created_at", -1)],
+            name="idx_notifications_user_time"
+        )
         print("✅ Connected to MongoDB")
     except Exception as e:
         print(f"❌ Failed to connect to MongoDB: {e}")
@@ -57,6 +68,10 @@ class ItemMatch(BaseModel):
     image_url: Optional[str] = None
     # Add other fields as needed
 
+
+class UserNotificationRequest(BaseModel):
+    uid: str
+
 from fastapi.staticfiles import StaticFiles
 
 # --- Endpoints ---
@@ -77,6 +92,21 @@ def get_image_url(image_path: str) -> Optional[str]:
         return f"http://localhost:8001/static/{rel_path}".replace("\\", "/") # Ensure forward slashes for URL
     except ValueError:
         return None
+
+
+def create_user_notification(uid: str, title: str, message: str, notif_type: str = "update"):
+    if db is None or not uid:
+        return
+    db["notifications"].insert_one(
+        {
+            "uid": uid,
+            "title": title,
+            "message": message,
+            "type": notif_type,
+            "read": False,
+            "created_at": datetime.now(),
+        }
+    )
 
 # --- Pydantic Models for Response ---
 
@@ -152,8 +182,8 @@ async def search_items(
         print(f"Feature extraction failed: {e}")
         return {"matches": [], "message": f"Feature extraction failed: {str(e)}"}
 
-    # 5. Fetch Candidates from DB
-    targets = list(db[target_col_name].find())
+    # 5. Fetch Candidates from DB – only approved (active) items
+    targets = list(db[target_col_name].find({"status": "active"}))
     matches = []
 
     print(f"🔄 Scanning {len(targets)} items in {target_col_name}...")
@@ -239,7 +269,7 @@ async def submit_item(
         "image_path": saved_img_path,
         "uid": uid,
         "created_at": datetime.now(),
-        "status": "active" # active, resolved
+        "status": "pending"  # pending → admin approves → active | rejected
     }
 
     result = db[collection_name].insert_one(item_doc)
@@ -265,16 +295,16 @@ async def get_all_items():
 
     all_items = []
     
-    # Fetch lost items
-    lost_items = list(_db["lost_items"].find())
+    # Fetch lost items – only "active" ones are visible to regular users
+    lost_items = list(_db["lost_items"].find({"status": "active"}))
     for item in lost_items:
         item["_id"] = str(item["_id"])
         item["type"] = "lost"
         item["image_url"] = get_image_url(item.get("image_path"))
         all_items.append(item)
         
-    # Fetch found items
-    found_items = list(_db["found_items"].find())
+    # Fetch found items – only "active" ones
+    found_items = list(_db["found_items"].find({"status": "active"}))
     for item in found_items:
         item["_id"] = str(item["_id"])
         item["type"] = "found"
@@ -285,6 +315,26 @@ async def get_all_items():
     all_items.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
     
     return {"items": all_items}
+
+
+@app.get("/user/items")
+async def get_user_items(uid: str):
+    """Fetches all items submitted by a specific user, regardless of moderation status."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+
+    user_items = []
+
+    for coll_name, item_type in [("lost_items", "lost"), ("found_items", "found")]:
+        items = list(db[coll_name].find({"uid": uid}))
+        for item in items:
+            item["_id"] = str(item["_id"])
+            item["type"] = item_type
+            item["image_url"] = get_image_url(item.get("image_path"))
+            user_items.append(item)
+
+    user_items.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+    return {"items": user_items}
 
 # --- User Profile & Settings ---
 
@@ -347,6 +397,45 @@ async def update_user_settings(uid: str, data: dict):
     )
     return {"status": "success"}
 
+
+@app.get("/user/notifications")
+async def get_user_notifications(uid: str):
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+
+    notifications = []
+    for notif in db["notifications"].find({"uid": uid}).sort("created_at", -1).limit(100):
+        notif["_id"] = str(notif["_id"])
+        notifications.append(notif)
+    return {"notifications": notifications}
+
+
+@app.post("/user/notifications/read-all")
+async def mark_all_notifications_read(uid: str):
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+
+    db["notifications"].update_many(
+        {"uid": uid, "read": False},
+        {"$set": {"read": True, "read_at": datetime.now()}},
+    )
+    return {"status": "success"}
+
+
+@app.post("/user/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, uid: str):
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    from bson import ObjectId
+
+    result = db["notifications"].update_one(
+        {"_id": ObjectId(notification_id), "uid": uid},
+        {"$set": {"read": True, "read_at": datetime.now()}},
+    )
+    if not result.matched_count:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"status": "success"}
+
 @app.delete("/items/{item_id}")
 async def delete_item(item_id: str):
     if db is None:
@@ -372,3 +461,492 @@ async def delete_item(item_id: str):
             continue
             
     raise HTTPException(status_code=404, detail="Item not found")
+
+
+# ─────────────────────────────────────────────────────────────
+#  REPORTING – Any user can flag a post as suspicious
+# ─────────────────────────────────────────────────────────────
+
+class ReportRequest(BaseModel):
+    reporter_uid: str
+    reason: str
+
+@app.post("/items/{item_id}/report")
+async def report_item(item_id: str, body: ReportRequest):
+    """Flag an item as suspicious. Creates a record in the 'reports' collection."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    from bson import ObjectId
+
+    # Verify the item exists
+    found = False
+    for coll in ["lost_items", "found_items"]:
+        try:
+            if db[coll].find_one({"_id": ObjectId(item_id)}):
+                found = True
+                break
+        except Exception:
+            pass
+    if not found:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    # Prevent duplicate reports by the same user for the same item.
+    existing = db["reports"].find_one({
+        "item_id": item_id,
+        "reporter_uid": body.reporter_uid,
+    })
+    if existing:
+        raise HTTPException(status_code=409, detail="You already reported this listing")
+
+    report_doc = {
+        "item_id": item_id,
+        "reporter_uid": body.reporter_uid,
+        "reason": body.reason,
+        "status": "pending",   # pending | resolved | rejected
+        "created_at": datetime.now(),
+    }
+
+    try:
+        result = db["reports"].insert_one(report_doc)
+    except DuplicateKeyError:
+        raise HTTPException(status_code=409, detail="You already reported this listing")
+
+    create_user_notification(
+        body.reporter_uid,
+        "Report submitted",
+        "Your report was sent to admins for review.",
+        "system",
+    )
+
+    return {"status": "success", "report_id": str(result.inserted_id)}
+
+
+# ─────────────────────────────────────────────────────────────
+#  ADMIN – All endpoints require the client to send
+#  X-Admin-UID header; we verify role == "admin" in DB.
+# ─────────────────────────────────────────────────────────────
+
+def _require_admin(uid: str):
+    """Raise 403 if uid does not belong to an admin account."""
+    if not uid:
+        raise HTTPException(status_code=403, detail="Admin UID required")
+    user = db["users"].find_one({"firebase_uid": uid})
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Forbidden: admin access only")
+
+
+@app.get("/admin/stats")
+async def admin_stats(uid: str):
+    """Summary counts for the admin dashboard."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+
+    lost_total   = db["lost_items"].count_documents({})
+    found_total  = db["found_items"].count_documents({})
+    pending      = (db["lost_items"].count_documents({"status": "pending"}) +
+                    db["found_items"].count_documents({"status": "pending"}))
+    rejected     = (db["lost_items"].count_documents({"status": "rejected"}) +
+                    db["found_items"].count_documents({"status": "rejected"}))
+    total_users  = db["users"].count_documents({})
+    open_reports = db["reports"].count_documents({"status": "pending"})
+
+    return {
+        "total_posts": lost_total + found_total,
+        "pending_review": pending,
+        "rejected_posts": rejected,
+        "total_users": total_users,
+        "open_reports": open_reports,
+    }
+
+
+@app.get("/admin/posts/pending")
+async def admin_pending_posts(uid: str):
+    """All items with status == 'pending', waiting for admin review."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+
+    items = []
+    for coll, item_type in [("lost_items", "lost"), ("found_items", "found")]:
+        for item in db[coll].find({"status": "pending"}):
+            item["_id"] = str(item["_id"])
+            item["type"] = item_type
+            item["image_url"] = get_image_url(item.get("image_path"))
+            items.append(item)
+
+    items.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+    return {"items": items}
+
+
+@app.post("/admin/posts/{item_id}/approve")
+async def admin_approve_post(item_id: str, uid: str):
+    """Set item status to 'active' so it appears in the public search."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+    from bson import ObjectId
+
+    for coll in ["lost_items", "found_items"]:
+        try:
+            item = db[coll].find_one({"_id": ObjectId(item_id)})
+            result = db[coll].update_one(
+                {"_id": ObjectId(item_id)},
+                {"$set": {"status": "active", "reviewed_at": datetime.now()}}
+            )
+            if result.matched_count:
+                if item and item.get("uid"):
+                    create_user_notification(
+                        item.get("uid"),
+                        "Listing approved",
+                        "Your listing has been approved and is now visible.",
+                        "update",
+                    )
+                return {"status": "success", "message": "Post approved"}
+        except Exception:
+            pass
+    raise HTTPException(status_code=404, detail="Item not found")
+
+
+@app.post("/admin/posts/{item_id}/reject")
+async def admin_reject_post(item_id: str, uid: str, reason: str = ""):
+    """Move item to recycling bin (status = 'rejected')."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+    from bson import ObjectId
+
+    for coll in ["lost_items", "found_items"]:
+        try:
+            item = db[coll].find_one({"_id": ObjectId(item_id)})
+            result = db[coll].update_one(
+                {"_id": ObjectId(item_id)},
+                {"$set": {"status": "rejected", "reject_reason": reason, "reviewed_at": datetime.now()}}
+            )
+            if result.matched_count:
+                if item and item.get("uid"):
+                    create_user_notification(
+                        item.get("uid"),
+                        "Listing rejected",
+                        "Your listing was moved to recycling bin by admin review.",
+                        "alert",
+                    )
+                return {"status": "success", "message": "Post rejected and moved to recycling bin"}
+        except Exception:
+            pass
+    raise HTTPException(status_code=404, detail="Item not found")
+
+
+@app.get("/admin/posts/recycled")
+async def admin_recycled_posts(uid: str):
+    """Items in the recycling bin (status == 'rejected')."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+
+    items = []
+    for coll, item_type in [("lost_items", "lost"), ("found_items", "found")]:
+        for item in db[coll].find({"status": "rejected"}):
+            item["_id"] = str(item["_id"])
+            item["type"] = item_type
+            item["image_url"] = get_image_url(item.get("image_path"))
+            items.append(item)
+
+    items.sort(key=lambda x: x.get("reviewed_at", datetime.min), reverse=True)
+    return {"items": items}
+
+
+@app.post("/admin/posts/{item_id}/restore")
+async def admin_restore_post(item_id: str, uid: str):
+    """Restore a rejected item back to 'pending' for re-review."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+    from bson import ObjectId
+
+    for coll in ["lost_items", "found_items"]:
+        try:
+            result = db[coll].update_one(
+                {"_id": ObjectId(item_id)},
+                {"$set": {"status": "pending"}, "$unset": {"reject_reason": "", "reviewed_at": ""}}
+            )
+            if result.matched_count:
+                return {"status": "success", "message": "Post restored to pending review"}
+        except Exception:
+            pass
+    raise HTTPException(status_code=404, detail="Item not found")
+
+
+@app.delete("/admin/posts/{item_id}/permanent")
+async def admin_delete_post_permanent(item_id: str, uid: str):
+    """Permanently delete an item (removes image file too)."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+    from bson import ObjectId
+    import os
+
+    for coll in ["lost_items", "found_items"]:
+        try:
+            item = db[coll].find_one({"_id": ObjectId(item_id)})
+            if item:
+                img_path = item.get("image_path")
+                if img_path and os.path.exists(img_path):
+                    try:
+                        os.remove(img_path)
+                    except Exception:
+                        pass
+                db[coll].delete_one({"_id": ObjectId(item_id)})
+                return {"status": "success", "message": "Item permanently deleted"}
+        except Exception:
+            pass
+    raise HTTPException(status_code=404, detail="Item not found")
+
+
+@app.get("/admin/users")
+async def admin_get_users(uid: str):
+    """List all registered users."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+
+    users = []
+    for user in db["users"].find():
+        user["_id"] = str(user["_id"])
+        users.append(user)
+    return {"users": users}
+
+
+@app.post("/admin/users/{target_uid}/suspend")
+async def admin_suspend_user(target_uid: str, uid: str):
+    """Suspend a user account (sets suspended: true)."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+
+    db["users"].update_one(
+        {"firebase_uid": target_uid},
+        {"$set": {"suspended": True}},
+        upsert=True
+    )
+    return {"status": "success", "message": "User suspended"}
+
+
+@app.post("/admin/users/{target_uid}/unsuspend")
+async def admin_unsuspend_user(target_uid: str, uid: str):
+    """Re-enable a previously suspended user."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+
+    db["users"].update_one(
+        {"firebase_uid": target_uid},
+        {"$set": {"suspended": False}},
+        upsert=True
+    )
+    return {"status": "success", "message": "User unsuspended"}
+
+
+@app.delete("/admin/users/{target_uid}")
+async def admin_delete_user(target_uid: str, uid: str):
+    """Remove a user record and all their posts from the database."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+    import os
+
+    # Delete their posts
+    for coll in ["lost_items", "found_items"]:
+        items = list(db[coll].find({"uid": target_uid}))
+        for item in items:
+            img_path = item.get("image_path")
+            if img_path and os.path.exists(img_path):
+                try:
+                    os.remove(img_path)
+                except Exception:
+                    pass
+        db[coll].delete_many({"uid": target_uid})
+
+    db["users"].delete_one({"firebase_uid": target_uid})
+    db["user_settings"].delete_one({"firebase_uid": target_uid})
+    return {"status": "success", "message": "User and all their data deleted"}
+
+
+@app.get("/admin/reports")
+async def admin_get_reports(uid: str):
+    """List all user-submitted reports, with item details embedded."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+    from bson import ObjectId
+
+    reports = []
+    for report in db["reports"].find().sort("created_at", -1):
+        report["_id"] = str(report["_id"])
+        item_id = report.get("item_id")
+        report["item"] = None
+        if item_id:
+            for coll, item_type in [("lost_items", "lost"), ("found_items", "found")]:
+                try:
+                    item = db[coll].find_one({"_id": ObjectId(item_id)})
+                    if item:
+                        item["_id"] = str(item["_id"])
+                        item["type"] = item_type
+                        item["image_url"] = get_image_url(item.get("image_path"))
+                        report["item"] = item
+                        break
+                except Exception:
+                    pass
+        reports.append(report)
+    return {"reports": reports}
+
+
+@app.post("/admin/reports/{report_id}/resolve")
+async def admin_resolve_report(report_id: str, uid: str):
+    """Mark a report as resolved."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+    from bson import ObjectId
+
+    report = db["reports"].find_one({"_id": ObjectId(report_id)})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    result = db["reports"].update_one(
+        {"_id": ObjectId(report_id)},
+        {"$set": {"status": "resolved", "resolved_at": datetime.now()}}
+    )
+    if not result.matched_count:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    create_user_notification(
+        report.get("reporter_uid"),
+        "Report resolved",
+        "An admin reviewed your report and marked it resolved.",
+        "update",
+    )
+
+    return {"status": "success", "message": "Report resolved"}
+
+
+@app.post("/admin/reports/{report_id}/reject")
+async def admin_reject_report(report_id: str, uid: str):
+    """Reject a report (report closed, item kept)."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+    from bson import ObjectId
+
+    report = db["reports"].find_one({"_id": ObjectId(report_id)})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    result = db["reports"].update_one(
+        {"_id": ObjectId(report_id)},
+        {
+            "$set": {
+                "status": "rejected",
+                "resolved_at": datetime.now(),
+                "review_action": "report_rejected",
+            }
+        }
+    )
+    if not result.matched_count:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    create_user_notification(
+        report.get("reporter_uid"),
+        "Report rejected",
+        "An admin reviewed your report and decided to keep the listing.",
+        "alert",
+    )
+
+    return {"status": "success", "message": "Report rejected"}
+
+
+@app.post("/admin/reports/{report_id}/remove-item")
+async def admin_remove_item_from_report(report_id: str, uid: str):
+    """Delete the reported item and resolve the report."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    _require_admin(uid)
+    from bson import ObjectId
+    import os
+
+    report = db["reports"].find_one({"_id": ObjectId(report_id)})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    item_id = report.get("item_id")
+    item_deleted = False
+    owner_uid = None
+
+    if item_id:
+        for coll in ["lost_items", "found_items"]:
+            try:
+                item = db[coll].find_one({"_id": ObjectId(item_id)})
+                if item:
+                    owner_uid = item.get("uid")
+                    img_path = item.get("image_path")
+                    if img_path and os.path.exists(img_path):
+                        try:
+                            os.remove(img_path)
+                        except Exception:
+                            pass
+                    db[coll].delete_one({"_id": ObjectId(item_id)})
+                    item_deleted = True
+                    break
+            except Exception:
+                pass
+
+    db["reports"].update_one(
+        {"_id": ObjectId(report_id)},
+        {
+            "$set": {
+                "status": "resolved",
+                "resolved_at": datetime.now(),
+                "review_action": "item_removed" if item_deleted else "item_missing_report_closed",
+            }
+        }
+    )
+
+    create_user_notification(
+        report.get("reporter_uid"),
+        "Reported item removed",
+        "Admin removed the listing you reported. Thank you for helping keep the community safe.",
+        "system",
+    )
+
+    if owner_uid:
+        create_user_notification(
+            owner_uid,
+            "Your listing was removed",
+            "An admin removed your listing after a safety review.",
+            "alert",
+        )
+
+    if item_deleted:
+        return {"status": "success", "message": "Item removed and report resolved"}
+    return {"status": "success", "message": "Item not found. Report closed"}
+
+
+@app.post("/admin/setup")
+async def admin_setup(secret: str, target_uid: str):
+    """
+    One-time endpoint to grant admin role to a Firebase UID.
+    Requires ADMIN_SETUP_SECRET env variable to be set.
+    """
+    import os as _os
+    expected = _os.environ.get("ADMIN_SETUP_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=403, detail="Invalid setup secret")
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+
+    db["users"].update_one(
+        {"firebase_uid": target_uid},
+        {"$set": {"firebase_uid": target_uid, "role": "admin"}},
+        upsert=True
+    )
+    return {"status": "success", "message": f"User {target_uid} is now an admin"}
