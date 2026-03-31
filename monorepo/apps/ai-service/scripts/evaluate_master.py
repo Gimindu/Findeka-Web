@@ -73,7 +73,7 @@ import numpy as np
 from PIL import Image
 from sklearn.metrics.pairwise import cosine_similarity as sk_cosine
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from models_loader import model_manager
 from evaluation.evaluate_with_images import ExperimentEvaluatorWithImages

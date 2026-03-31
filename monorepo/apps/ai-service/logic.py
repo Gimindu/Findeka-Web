@@ -5,8 +5,8 @@ from PIL import Image
 import clip
 from sklearn.metrics.pairwise import cosine_similarity
 from thefuzz import fuzz
-from tensorflow.keras.preprocessing import image as keras_image
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from keras.preprocessing import image as keras_image
+from keras.applications.mobilenet_v2 import preprocess_input
 
 from models_loader import model_manager
 from utils import run_ocr, check_color_match, get_dominant_colors, calculate_location_score, get_time_decay, get_image_quality
