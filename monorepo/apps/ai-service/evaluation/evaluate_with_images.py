@@ -110,7 +110,12 @@ class ExperimentEvaluatorWithImages:
         logger.info(f"Loaded {len(self.image_loader.get_images())} test images")
     
     def add_experiment(self, name: str, accuracy: float, precision: float,
-                      recall: float, f1_score: float, 
+                      recall: float, f1_score: float,
+                      rank1_accuracy: float = None,
+                      mrr: float = None,
+                      avg_correct_score: float = None,
+                      avg_margin: float = None,
+                      failure_rate: float = None,
                       images_used: int = 0, details: str = "") -> None:
         """
         Add experiment results.
@@ -121,14 +126,27 @@ class ExperimentEvaluatorWithImages:
             precision: Precision score
             recall: Recall score
             f1_score: F1 score
+            rank1_accuracy: Rank-1 retrieval accuracy
+            mrr: Mean Reciprocal Rank
+            avg_correct_score: Mean score of the true query-target pair
+            avg_margin: Mean margin (true score - second-best score)
+            failure_rate: Fraction of failed queries (1 - rank1_accuracy)
             images_used: Number of test images used
             details: Additional details
         """
+        rank1_value = accuracy if rank1_accuracy is None else rank1_accuracy
+        fail_value = (1.0 - rank1_value) if failure_rate is None else failure_rate
+
         self.experiments[name] = {
             'accuracy': accuracy,
             'precision': precision,
             'recall': recall,
             'f1_score': f1_score,
+            'rank1_accuracy': rank1_value,
+            'mrr': mrr,
+            'avg_correct_score': avg_correct_score,
+            'avg_margin': avg_margin,
+            'failure_rate': fail_value,
             'images_used': images_used,
             'details': details,
             'timestamp': datetime.now().isoformat(),
@@ -157,18 +175,27 @@ class ExperimentEvaluatorWithImages:
         table += "-" * 120 + "\n\n"
         
         # Comparison table header
-        table += f"{'Experiment':<40} | {'Accuracy':<12} | {'Precision':<12} | {'Recall':<12} | {'F1 Score':<12} | {'Images Used':<15}\n"
+        table += f"{'Experiment':<36} | {'Rank-1':<8} | {'MRR':<8} | {'AvgScore':<9} | {'AvgMargin':<10} | {'FailRate':<9} | {'Images':<6}\n"
         table += "-" * 120 + "\n"
         
         # Data rows
         for exp_name, metrics in self.experiments.items():
-            accuracy = metrics['accuracy']
-            precision = metrics['precision']
-            recall = metrics['recall']
-            f1 = metrics['f1_score']
+            rank1 = metrics.get('rank1_accuracy', metrics.get('accuracy', 0.0))
+            mrr = metrics.get('mrr')
+            avg_score = metrics.get('avg_correct_score')
+            avg_margin = metrics.get('avg_margin')
+            fail_rate = metrics.get('failure_rate', 1.0 - rank1)
             images_used = metrics['images_used']
-            
-            table += f"{exp_name:<40} | {accuracy:<12.4f} | {precision:<12.4f} | {recall:<12.4f} | {f1:<12.4f} | {images_used:<15}\n"
+
+            mrr_s = f"{mrr:.4f}" if isinstance(mrr, (int, float)) else "N/A"
+            score_s = f"{avg_score:.4f}" if isinstance(avg_score, (int, float)) else "N/A"
+            margin_s = f"{avg_margin:+.4f}" if isinstance(avg_margin, (int, float)) else "N/A"
+            fail_s = f"{fail_rate * 100:.2f}%"
+
+            table += (
+                f"{exp_name:<36} | {rank1:<8.4f} | {mrr_s:<8} | {score_s:<9} | "
+                f"{margin_s:<10} | {fail_s:<9} | {images_used:<6}\n"
+            )
         
         table += "=" * 120 + "\n"
         return table
@@ -202,10 +229,20 @@ class ExperimentEvaluatorWithImages:
             report += f"\n{'-' * 120}\n"
             report += f"Experiment: {exp_name}\n"
             report += f"{'-' * 120}\n"
-            report += f"Accuracy:     {metrics['accuracy']:<10.4f} ({metrics['accuracy']*100:>6.2f}%)\n"
-            report += f"Precision:    {metrics['precision']:<10.4f} ({metrics['precision']*100:>6.2f}%)\n"
-            report += f"Recall:       {metrics['recall']:<10.4f} ({metrics['recall']*100:>6.2f}%)\n"
-            report += f"F1 Score:     {metrics['f1_score']:<10.4f} ({metrics['f1_score']*100:>6.2f}%)\n"
+            rank1 = metrics.get('rank1_accuracy', metrics.get('accuracy', 0.0))
+            mrr = metrics.get('mrr')
+            avg_score = metrics.get('avg_correct_score')
+            avg_margin = metrics.get('avg_margin')
+            fail_rate = metrics.get('failure_rate', 1.0 - rank1)
+
+            report += f"Rank-1 Acc:   {rank1:<10.4f} ({rank1*100:>6.2f}%)\n"
+            if isinstance(mrr, (int, float)):
+                report += f"MRR:          {mrr:<10.4f}\n"
+            if isinstance(avg_score, (int, float)):
+                report += f"AvgScore:     {avg_score:<10.4f}\n"
+            if isinstance(avg_margin, (int, float)):
+                report += f"AvgMargin:    {avg_margin:<10.4f}\n"
+            report += f"Failure Rate: {fail_rate:<10.4f} ({fail_rate*100:>6.2f}%)\n"
             report += f"Images Used:  {metrics['images_used']}/{image_stats['total_images']}\n"
             
             if metrics['details']:

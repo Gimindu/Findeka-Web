@@ -52,55 +52,85 @@
       "precision": 1.0,
       "recall": 1.0,
       "f1_score": 1.0,
+      "rank1_accuracy": 1.0,
+      "mrr": 1.0,
+      "avg_correct_score": 0.7505784531434377,
+      "avg_margin": 0.2003176212310791,
+      "failure_rate": 0.0,
       "images_used": 3,
-      "details": "BERT(query description) vs BERT(OCR from target photo). Text-only matching: fails when found items show no readable text. AvgMatchScore=0.751 | AvgMargin=+0.200",
-      "timestamp": "2026-03-29T02:13:46.170772"
+      "details": "BERT(query description) vs BERT(OCR from target photo). Text-only matching: fails when found items show no readable text. Rank1=1.000 | MRR=1.000 | AvgMatchScore=0.751 | AvgMargin=+0.200 | FailureRate=0.000",
+      "timestamp": "2026-03-29T21:33:32.072724"
     },
     "Image Only": {
       "accuracy": 1.0,
       "precision": 1.0,
       "recall": 1.0,
       "f1_score": 1.0,
+      "rank1_accuracy": 1.0,
+      "mrr": 1.0,
+      "avg_correct_score": 0.5877697269121805,
+      "avg_margin": 0.09161591529846191,
+      "failure_rate": 0.0,
       "images_used": 3,
-      "details": "CLIP image embedding similarity: query photo vs target photo. No text features used. AvgMatchScore=0.588 | AvgMargin=+0.092",
-      "timestamp": "2026-03-29T02:13:46.170888"
+      "details": "CLIP image embedding similarity: query photo vs target photo. No text features used. Rank1=1.000 | MRR=1.000 | AvgMatchScore=0.588 | AvgMargin=+0.092 | FailureRate=0.000",
+      "timestamp": "2026-03-29T21:33:32.072904"
     },
     "Hybrid Fusion": {
       "accuracy": 1.0,
       "precision": 1.0,
       "recall": 1.0,
       "f1_score": 1.0,
+      "rank1_accuracy": 1.0,
+      "mrr": 1.0,
+      "avg_correct_score": 0.8189846078554789,
+      "avg_margin": 0.2579372391104698,
+      "failure_rate": 0.0,
       "images_used": 3,
-      "details": "CLIP image-to-image (base) + 0.3 Ã— CLIP cross-modal (query text description ? target image). Additive design: margin strictly >= Image Only when both modalities agree. AvgMatchScore=0.819 | AvgMargin=+0.258",
-      "timestamp": "2026-03-29T02:13:46.170992"
+      "details": "CLIP image-to-image (base) + 0.3 Ã— CLIP cross-modal (query text description ? target image). Additive design: margin strictly >= Image Only when both modalities agree. Rank1=1.000 | MRR=1.000 | AvgMatchScore=0.819 | AvgMargin=+0.258 | FailureRate=0.000",
+      "timestamp": "2026-03-29T21:33:32.073069"
     },
     "Hybrid + OCR Boost": {
       "accuracy": 1.0,
       "precision": 1.0,
       "recall": 1.0,
       "f1_score": 1.0,
+      "rank1_accuracy": 1.0,
+      "mrr": 1.0,
+      "avg_correct_score": 0.8523179411888123,
+      "avg_margin": 0.2912705724438031,
+      "failure_rate": 0.0,
       "images_used": 3,
-      "details": "Hybrid base (CLIP image + 0.3Ã—CLIP cross-modal) + keyword-overlap OCR bonus: fraction of query content words found literally in target OCR, scaled by 0.4. Keyword matching avoids spurious BERT boosts from common words like LOST/FOUND in background signage. AvgMatchScore=0.852 | AvgMargin=+0.291",
-      "timestamp": "2026-03-29T02:13:46.171096"
+      "details": "Hybrid base (CLIP image + 0.3Ã—CLIP cross-modal) + keyword-overlap OCR bonus: fraction of query content words found literally in target OCR, scaled by 0.4. Keyword matching avoids spurious BERT boosts from common words like LOST/FOUND in background signage. Rank1=1.000 | MRR=1.000 | AvgMatchScore=0.852 | AvgMargin=+0.291 | FailureRate=0.000",
+      "timestamp": "2026-03-29T21:33:32.073230"
     },
     "Image Only (Degraded Photo)": {
       "accuracy": 0.6666666666666666,
       "precision": 0.6666666666666666,
       "recall": 0.6666666666666666,
       "f1_score": 0.6666666666666666,
+      "rank1_accuracy": 0.6666666666666666,
+      "mrr": 0.8333333333333334,
+      "avg_correct_score": 0.06415753004451592,
+      "avg_margin": 0.02003434393554926,
+      "failure_rate": 0.33333333333333337,
       "images_used": 3,
-      "details": "CONDITION 2A: Image Only with query CLIP embedding corrupted by Gaussian noise (noise_factor=10.0, SNR~=0.17, seed=42), simulating a blurry or dark query photo. Shows image-only matching collapses under poor photo quality. AvgMatchScore=0.064 | AvgMargin=+0.020",
-      "timestamp": "2026-03-29T02:13:46.171194"
+      "details": "CONDITION 2A: Image Only with query CLIP embedding corrupted by Gaussian noise (noise_factor=10.0, SNR~=0.17, seed=42), simulating a blurry or dark query photo. Shows image-only matching collapses under poor photo quality. Rank1=0.667 | MRR=0.833 | AvgMatchScore=0.064 | AvgMargin=+0.020 | FailureRate=0.333",
+      "timestamp": "2026-03-29T21:33:32.073389"
     },
     "Hybrid Fusion (Degraded Photo)": {
       "accuracy": 1.0,
       "precision": 1.0,
       "recall": 1.0,
       "f1_score": 1.0,
+      "rank1_accuracy": 1.0,
+      "mrr": 1.0,
+      "avg_correct_score": 0.3348737998555104,
+      "avg_margin": 0.07977249814818303,
+      "failure_rate": 0.0,
       "images_used": 3,
-      "details": "CONDITION 2B: Same image degradation as 2A, but CLIP cross-modal (typed text description -> target image) is intact. Text description RESCUES the match: Hybrid recovers to 100%. AvgMatchScore=0.335 | AvgMargin=+0.080",
-      "timestamp": "2026-03-29T02:13:46.171299"
+      "details": "CONDITION 2B: Same image degradation as 2A, but CLIP cross-modal (typed text description -> target image) is intact. Text description RESCUES the match: Hybrid recovers to 100%. Rank1=1.000 | MRR=1.000 | AvgMatchScore=0.335 | AvgMargin=+0.080 | FailureRate=0.000",
+      "timestamp": "2026-03-29T21:33:32.073557"
     }
   },
-  "generated_at": "2026-03-29T02:13:46.172474"
+  "generated_at": "2026-03-29T21:33:32.074647"
 }

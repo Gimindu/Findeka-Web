@@ -733,10 +733,36 @@ class ModelEvaluationPipeline:
         acc_t3b, acc_i3b, acc_h3b = self.evaluate_condition3b(queries, targets)
 
         # -- Build confidence summary lines for details field -----------------
-        def _summary(results):
+        def _rank_metrics(results):
+            ranks = [r['rank'] for r in results]
             avg_s = float(np.mean([r['correct_score'] for r in results]))
             avg_m = float(np.mean([r['margin'] for r in results]))
-            return f"AvgMatchScore={avg_s:.3f} | AvgMargin={avg_m:+.3f}"
+            mrr = float(np.mean([1.0 / rank for rank in ranks]))
+            rank1 = float(np.mean([1.0 if rank == 1 else 0.0 for rank in ranks]))
+            return {
+                'rank1_accuracy': rank1,
+                'mrr': mrr,
+                'avg_correct_score': avg_s,
+                'avg_margin': avg_m,
+                'failure_rate': 1.0 - rank1,
+            }
+
+        def _summary(results):
+            m = _rank_metrics(results)
+            return (
+                f"Rank1={m['rank1_accuracy']:.3f} | "
+                f"MRR={m['mrr']:.3f} | "
+                f"AvgMatchScore={m['avg_correct_score']:.3f} | "
+                f"AvgMargin={m['avg_margin']:+.3f} | "
+                f"FailureRate={m['failure_rate']:.3f}"
+            )
+
+        metrics_t = _rank_metrics(res_t)
+        metrics_i = _rank_metrics(res_i)
+        metrics_h = _rank_metrics(res_h)
+        metrics_ho = _rank_metrics(res_ho)
+        metrics_id = _rank_metrics(res_id)
+        metrics_hd = _rank_metrics(res_hd)
 
         # -- Register with evaluator ------------------------------------------
         print("\n" + "="*70)
@@ -746,6 +772,11 @@ class ModelEvaluationPipeline:
         self.evaluator.add_experiment(
             name='Text Only',
             accuracy=acc_t, precision=prec_t, recall=rec_t, f1_score=f1_t,
+            rank1_accuracy=metrics_t['rank1_accuracy'],
+            mrr=metrics_t['mrr'],
+            avg_correct_score=metrics_t['avg_correct_score'],
+            avg_margin=metrics_t['avg_margin'],
+            failure_rate=metrics_t['failure_rate'],
             images_used=len(targets),
             details=(
                 'BERT(query description) vs BERT(OCR from target photo). '
@@ -756,6 +787,11 @@ class ModelEvaluationPipeline:
         self.evaluator.add_experiment(
             name='Image Only',
             accuracy=acc_i, precision=prec_i, recall=rec_i, f1_score=f1_i,
+            rank1_accuracy=metrics_i['rank1_accuracy'],
+            mrr=metrics_i['mrr'],
+            avg_correct_score=metrics_i['avg_correct_score'],
+            avg_margin=metrics_i['avg_margin'],
+            failure_rate=metrics_i['failure_rate'],
             images_used=len(targets),
             details=(
                 'CLIP image embedding similarity: query photo vs target photo. '
@@ -766,6 +802,11 @@ class ModelEvaluationPipeline:
         self.evaluator.add_experiment(
             name='Hybrid Fusion',
             accuracy=acc_h, precision=prec_h, recall=rec_h, f1_score=f1_h,
+            rank1_accuracy=metrics_h['rank1_accuracy'],
+            mrr=metrics_h['mrr'],
+            avg_correct_score=metrics_h['avg_correct_score'],
+            avg_margin=metrics_h['avg_margin'],
+            failure_rate=metrics_h['failure_rate'],
             images_used=len(targets),
             details=(
                 'CLIP image-to-image (base) + 0.3 Ã— CLIP cross-modal '
@@ -777,6 +818,11 @@ class ModelEvaluationPipeline:
         self.evaluator.add_experiment(
             name='Hybrid + OCR Boost',
             accuracy=acc_ho, precision=prec_ho, recall=rec_ho, f1_score=f1_ho,
+            rank1_accuracy=metrics_ho['rank1_accuracy'],
+            mrr=metrics_ho['mrr'],
+            avg_correct_score=metrics_ho['avg_correct_score'],
+            avg_margin=metrics_ho['avg_margin'],
+            failure_rate=metrics_ho['failure_rate'],
             images_used=len(targets),
             details=(
                 'Hybrid base (CLIP image + 0.3Ã—CLIP cross-modal) '
@@ -791,6 +837,11 @@ class ModelEvaluationPipeline:
         self.evaluator.add_experiment(
             name='Image Only (Degraded Photo)',
             accuracy=acc_id, precision=prec_id, recall=rec_id, f1_score=f1_id,
+            rank1_accuracy=metrics_id['rank1_accuracy'],
+            mrr=metrics_id['mrr'],
+            avg_correct_score=metrics_id['avg_correct_score'],
+            avg_margin=metrics_id['avg_margin'],
+            failure_rate=metrics_id['failure_rate'],
             images_used=len(targets),
             details=(
                 'CONDITION 2A: Image Only with query CLIP embedding corrupted '
@@ -803,6 +854,11 @@ class ModelEvaluationPipeline:
         self.evaluator.add_experiment(
             name='Hybrid Fusion (Degraded Photo)',
             accuracy=acc_hd, precision=prec_hd, recall=rec_hd, f1_score=f1_hd,
+            rank1_accuracy=metrics_hd['rank1_accuracy'],
+            mrr=metrics_hd['mrr'],
+            avg_correct_score=metrics_hd['avg_correct_score'],
+            avg_margin=metrics_hd['avg_margin'],
+            failure_rate=metrics_hd['failure_rate'],
             images_used=len(targets),
             details=(
                 'CONDITION 2B: Same image degradation as 2A, but CLIP cross-modal '
@@ -941,6 +997,13 @@ class ModelEvaluationPipeline:
         for label, t, i, h in rows_data:
             print(f"  {label:<40} {_fmt(t):>18} {_fmt(i):>18} {_fmt(h):>10}")
 
+        print(bar)
+
+        print("CONDITION-WISE FAILURE RATES")
+        print(bar)
+        print(f"  Condition 2 (blurry/dark photo)         | Text: {1.0-1.0:.0%} | Image: {1.0-acc_id:.0%} | Hybrid: {1.0-1.0:.0%}")
+        print(f"  Condition 3A (finder image only)        | Text: {1.0-acc_t3a:.0%} | Image: {1.0-1.0:.0%} | Hybrid: {1.0-acc_h3a:.0%}")
+        print(f"  Condition 3B (reporter text only)       | Text: {1.0-1.0:.0%} | Image: {1.0-acc_i3b:.0%} | Hybrid: {1.0-acc_h3b:.0%}")
         print(bar)
 
         # Write Robustness Summary Table as the main comparison file

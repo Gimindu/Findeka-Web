@@ -1,7 +1,7 @@
 
 ========================================================================================================================
 DETAILED EXPERIMENT EVALUATION REPORT WITH TEST IMAGES
-Generated: 2026-03-29 02:13:46
+Generated: 2026-03-29 21:33:32
 ========================================================================================================================
 
 Test Images Information:
@@ -46,79 +46,85 @@ Experiment Results:
 ------------------------------------------------------------------------------------------------------------------------
 Experiment: Text Only
 ------------------------------------------------------------------------------------------------------------------------
-Accuracy:     1.0000     (100.00%)
-Precision:    1.0000     (100.00%)
-Recall:       1.0000     (100.00%)
-F1 Score:     1.0000     (100.00%)
+Rank-1 Acc:   1.0000     (100.00%)
+MRR:          1.0000    
+AvgScore:     0.7506    
+AvgMargin:    0.2003    
+Failure Rate: 0.0000     (  0.00%)
 Images Used:  3/6
 
 Details:
-BERT(query description) vs BERT(OCR from target photo). Text-only matching: fails when found items show no readable text. AvgMatchScore=0.751 | AvgMargin=+0.200
-Timestamp:    2026-03-29T02:13:46.170772
+BERT(query description) vs BERT(OCR from target photo). Text-only matching: fails when found items show no readable text. Rank1=1.000 | MRR=1.000 | AvgMatchScore=0.751 | AvgMargin=+0.200 | FailureRate=0.000
+Timestamp:    2026-03-29T21:33:32.072724
 
 ------------------------------------------------------------------------------------------------------------------------
 Experiment: Image Only
 ------------------------------------------------------------------------------------------------------------------------
-Accuracy:     1.0000     (100.00%)
-Precision:    1.0000     (100.00%)
-Recall:       1.0000     (100.00%)
-F1 Score:     1.0000     (100.00%)
+Rank-1 Acc:   1.0000     (100.00%)
+MRR:          1.0000    
+AvgScore:     0.5878    
+AvgMargin:    0.0916    
+Failure Rate: 0.0000     (  0.00%)
 Images Used:  3/6
 
 Details:
-CLIP image embedding similarity: query photo vs target photo. No text features used. AvgMatchScore=0.588 | AvgMargin=+0.092
-Timestamp:    2026-03-29T02:13:46.170888
+CLIP image embedding similarity: query photo vs target photo. No text features used. Rank1=1.000 | MRR=1.000 | AvgMatchScore=0.588 | AvgMargin=+0.092 | FailureRate=0.000
+Timestamp:    2026-03-29T21:33:32.072904
 
 ------------------------------------------------------------------------------------------------------------------------
 Experiment: Hybrid Fusion
 ------------------------------------------------------------------------------------------------------------------------
-Accuracy:     1.0000     (100.00%)
-Precision:    1.0000     (100.00%)
-Recall:       1.0000     (100.00%)
-F1 Score:     1.0000     (100.00%)
+Rank-1 Acc:   1.0000     (100.00%)
+MRR:          1.0000    
+AvgScore:     0.8190    
+AvgMargin:    0.2579    
+Failure Rate: 0.0000     (  0.00%)
 Images Used:  3/6
 
 Details:
-CLIP image-to-image (base) + 0.3 Ã— CLIP cross-modal (query text description ? target image). Additive design: margin strictly >= Image Only when both modalities agree. AvgMatchScore=0.819 | AvgMargin=+0.258
-Timestamp:    2026-03-29T02:13:46.170992
+CLIP image-to-image (base) + 0.3 Ã— CLIP cross-modal (query text description ? target image). Additive design: margin strictly >= Image Only when both modalities agree. Rank1=1.000 | MRR=1.000 | AvgMatchScore=0.819 | AvgMargin=+0.258 | FailureRate=0.000
+Timestamp:    2026-03-29T21:33:32.073069
 
 ------------------------------------------------------------------------------------------------------------------------
 Experiment: Hybrid + OCR Boost
 ------------------------------------------------------------------------------------------------------------------------
-Accuracy:     1.0000     (100.00%)
-Precision:    1.0000     (100.00%)
-Recall:       1.0000     (100.00%)
-F1 Score:     1.0000     (100.00%)
+Rank-1 Acc:   1.0000     (100.00%)
+MRR:          1.0000    
+AvgScore:     0.8523    
+AvgMargin:    0.2913    
+Failure Rate: 0.0000     (  0.00%)
 Images Used:  3/6
 
 Details:
-Hybrid base (CLIP image + 0.3Ã—CLIP cross-modal) + keyword-overlap OCR bonus: fraction of query content words found literally in target OCR, scaled by 0.4. Keyword matching avoids spurious BERT boosts from common words like LOST/FOUND in background signage. AvgMatchScore=0.852 | AvgMargin=+0.291
-Timestamp:    2026-03-29T02:13:46.171096
+Hybrid base (CLIP image + 0.3Ã—CLIP cross-modal) + keyword-overlap OCR bonus: fraction of query content words found literally in target OCR, scaled by 0.4. Keyword matching avoids spurious BERT boosts from common words like LOST/FOUND in background signage. Rank1=1.000 | MRR=1.000 | AvgMatchScore=0.852 | AvgMargin=+0.291 | FailureRate=0.000
+Timestamp:    2026-03-29T21:33:32.073230
 
 ------------------------------------------------------------------------------------------------------------------------
 Experiment: Image Only (Degraded Photo)
 ------------------------------------------------------------------------------------------------------------------------
-Accuracy:     0.6667     ( 66.67%)
-Precision:    0.6667     ( 66.67%)
-Recall:       0.6667     ( 66.67%)
-F1 Score:     0.6667     ( 66.67%)
+Rank-1 Acc:   0.6667     ( 66.67%)
+MRR:          0.8333    
+AvgScore:     0.0642    
+AvgMargin:    0.0200    
+Failure Rate: 0.3333     ( 33.33%)
 Images Used:  3/6
 
 Details:
-CONDITION 2A: Image Only with query CLIP embedding corrupted by Gaussian noise (noise_factor=10.0, SNR~=0.17, seed=42), simulating a blurry or dark query photo. Shows image-only matching collapses under poor photo quality. AvgMatchScore=0.064 | AvgMargin=+0.020
-Timestamp:    2026-03-29T02:13:46.171194
+CONDITION 2A: Image Only with query CLIP embedding corrupted by Gaussian noise (noise_factor=10.0, SNR~=0.17, seed=42), simulating a blurry or dark query photo. Shows image-only matching collapses under poor photo quality. Rank1=0.667 | MRR=0.833 | AvgMatchScore=0.064 | AvgMargin=+0.020 | FailureRate=0.333
+Timestamp:    2026-03-29T21:33:32.073389
 
 ------------------------------------------------------------------------------------------------------------------------
 Experiment: Hybrid Fusion (Degraded Photo)
 ------------------------------------------------------------------------------------------------------------------------
-Accuracy:     1.0000     (100.00%)
-Precision:    1.0000     (100.00%)
-Recall:       1.0000     (100.00%)
-F1 Score:     1.0000     (100.00%)
+Rank-1 Acc:   1.0000     (100.00%)
+MRR:          1.0000    
+AvgScore:     0.3349    
+AvgMargin:    0.0798    
+Failure Rate: 0.0000     (  0.00%)
 Images Used:  3/6
 
 Details:
-CONDITION 2B: Same image degradation as 2A, but CLIP cross-modal (typed text description -> target image) is intact. Text description RESCUES the match: Hybrid recovers to 100%. AvgMatchScore=0.335 | AvgMargin=+0.080
-Timestamp:    2026-03-29T02:13:46.171299
+CONDITION 2B: Same image degradation as 2A, but CLIP cross-modal (typed text description -> target image) is intact. Text description RESCUES the match: Hybrid recovers to 100%. Rank1=1.000 | MRR=1.000 | AvgMatchScore=0.335 | AvgMargin=+0.080 | FailureRate=0.000
+Timestamp:    2026-03-29T21:33:32.073557
 
 ========================================================================================================================
