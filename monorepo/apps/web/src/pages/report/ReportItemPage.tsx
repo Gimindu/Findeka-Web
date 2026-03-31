@@ -23,7 +23,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { motion, AnimatePresence } from "framer-motion";
-import { searchItems, submitItem, ItemMatch } from "@/services/aiService";
+import {
+  searchItems,
+  submitItem,
+  confirmMatch,
+  ItemMatch,
+} from "@/services/aiService";
 import { ITEM_CATEGORIES } from "@/data/itemCategories";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -191,6 +196,33 @@ export default function ReportItemPage() {
   const handleSuccessClose = () => {
     setShowSuccessModal(false);
     navigate("/dashboard");
+  };
+
+  const handleConfirmMatch = async () => {
+    if (!user?.uid || !selectedMatch?._id) {
+      setErrorMsg("You must be logged in and select a valid match.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await confirmMatch(
+        user.uid,
+        selectedMatch._id,
+        postType,
+        postData.title || "reported item",
+      );
+      setSelectedMatch(null);
+      setShowMatchesModal(false);
+      setSuccessMessage(
+        "Match confirmed. The other user has been notified and can contact you.",
+      );
+      setShowSuccessModal(true);
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Failed to confirm match.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -612,16 +644,37 @@ export default function ReportItemPage() {
                   </div>
 
                   <div className="pt-4 flex flex-col gap-3 sm:flex-row">
-                    <a
-                      href={`tel:${selectedMatch.phone || "+94701234567"}`}
-                      className="flex-1 flex"
+                    <Button
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      onClick={handleConfirmMatch}
+                      disabled={isLoading}
                     >
-                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 cursor-pointer">
-                        <Phone className="w-4 h-4 mr-2" /> Call{" "}
-                        {postType === "lost" ? "Finder" : "Owner"} (
-                        {selectedMatch.phone || "+94 70 123 4567"})
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        "It's a match"
+                      )}
+                    </Button>
+                    {selectedMatch.phone ? (
+                      <a
+                        href={`tel:${selectedMatch.phone}`}
+                        className="flex-1 flex"
+                      >
+                        <Button className="w-full bg-emerald-600 hover:bg-emerald-700 cursor-pointer">
+                          <Phone className="w-4 h-4 mr-2" /> Call{" "}
+                          {postType === "lost" ? "Finder" : "Owner"} (
+                          {selectedMatch.phone})
+                        </Button>
+                      </a>
+                    ) : (
+                      <Button className="flex-1" variant="outline" disabled>
+                        <Phone className="w-4 h-4 mr-2" /> No phone number
+                        available
                       </Button>
-                    </a>
+                    )}
                     <Button
                       className="flex-1"
                       variant="outline"

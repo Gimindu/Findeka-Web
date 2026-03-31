@@ -117,6 +117,30 @@ export const submitItem = async (formData: FormData) => {
     }
 };
 
+export const confirmMatch = async (
+    requesterUid: string,
+    matchedItemId: string,
+    requesterPostType: "lost" | "found",
+    requesterItemName: string,
+) => {
+    const res = await fetch(`${API_URL}/matches/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            requester_uid: requesterUid,
+            matched_item_id: matchedItemId,
+            requester_post_type: requesterPostType,
+            requester_item_name: requesterItemName,
+        }),
+    });
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.detail || "Failed to confirm match");
+    }
+    userNotificationsCache.delete(requesterUid);
+    return res.json();
+};
+
 export const checkHealth = async (): Promise<boolean> => {
     try {
         const response = await fetch(`${API_URL}/`);

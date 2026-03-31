@@ -267,19 +267,27 @@ export default function ItemDetailsPage() {
                       {reportError}
                     </div>
                   ) : null}
-                  <a
-                    href={`tel:${item.phone || "+94701234567"}`}
-                    className="block w-full"
-                  >
-                    <Button className="w-full h-12 text-lg bg-[#DD6B20] hover:bg-[#C05616] text-white shadow-lg shadow-orange-500/25 cursor-pointer">
+                  {item.phone ? (
+                    <a href={`tel:${item.phone}`} className="block w-full">
+                      <Button className="w-full h-12 text-lg bg-[#DD6B20] hover:bg-[#C05616] text-white shadow-lg shadow-orange-500/25 cursor-pointer">
+                        <Phone className="w-5 h-5 mr-2" />
+                        Call{" "}
+                        {item.type.toLowerCase() === "lost"
+                          ? "Reporter"
+                          : "Finder"}{" "}
+                        ({item.phone})
+                      </Button>
+                    </a>
+                  ) : (
+                    <Button
+                      className="w-full h-12 text-lg"
+                      variant="outline"
+                      disabled
+                    >
                       <Phone className="w-5 h-5 mr-2" />
-                      Call{" "}
-                      {item.type.toLowerCase() === "lost"
-                        ? "Reporter"
-                        : "Finder"}{" "}
-                      ({item.phone || "+94 70 123 4567"})
+                      No phone number available
                     </Button>
-                  </a>
+                  )}
                   <Button
                     variant="outline"
                     className="w-full h-12 text-slate-600 border-slate-200 hover:bg-slate-50"

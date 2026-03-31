@@ -72,6 +72,13 @@ class ItemMatch(BaseModel):
 class UserNotificationRequest(BaseModel):
     uid: str
 
+
+class ConfirmMatchRequest(BaseModel):
+    requester_uid: str
+    matched_item_id: str
+    requester_post_type: str
+    requester_item_name: str
+
 from fastapi.staticfiles import StaticFiles
 
 # --- Endpoints ---
@@ -94,6 +101,16 @@ def get_image_url(image_path: str) -> Optional[str]:
         return None
 
 
+def get_user_phone(uid: Optional[str]) -> Optional[str]:
+    if db is None or not uid:
+        return None
+    user_doc = db["users"].find_one({"firebase_uid": uid})
+    phone = (user_doc or {}).get("phone")
+    if isinstance(phone, str):
+        phone = phone.strip()
+    return phone or None
+
+
 def create_user_notification(uid: str, title: str, message: str, notif_type: str = "update"):
     if db is None or not uid:
         return
@@ -107,6 +124,62 @@ def create_user_notification(uid: str, title: str, message: str, notif_type: str
             "created_at": datetime.now(),
         }
     )
+
+
+@app.post("/matches/confirm")
+async def confirm_match(body: ConfirmMatchRequest):
+    """Confirm a potential match and notify both sides."""
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+
+    requester_uid = (body.requester_uid or "").strip()
+    requester_post_type = (body.requester_post_type or "").strip().lower()
+    requester_item_name = (body.requester_item_name or "").strip() or "an item"
+
+    if not requester_uid:
+        raise HTTPException(status_code=400, detail="requester_uid is required")
+    if requester_post_type not in ["lost", "found"]:
+        raise HTTPException(status_code=400, detail="requester_post_type must be 'lost' or 'found'")
+
+    from bson import ObjectId
+
+    matched_item = None
+    for coll_name in ["lost_items", "found_items"]:
+        try:
+            matched_item = db[coll_name].find_one({"_id": ObjectId(body.matched_item_id)})
+            if matched_item:
+                break
+        except Exception:
+            continue
+
+    if not matched_item:
+        raise HTTPException(status_code=404, detail="Matched item not found")
+
+    matched_uid = (matched_item.get("uid") or "").strip()
+    if not matched_uid:
+        raise HTTPException(status_code=400, detail="Matched item has no owner uid")
+
+    if matched_uid == requester_uid:
+        raise HTTPException(status_code=400, detail="Cannot confirm match with your own listing")
+
+    counterpart_role = "owner" if requester_post_type == "found" else "finder"
+    matched_item_name = (matched_item.get("name") or "your listing").strip()
+
+    create_user_notification(
+        matched_uid,
+        "Potential match confirmed",
+        f"A user confirmed '{requester_item_name}' as a match to '{matched_item_name}'. Please check contact details to connect with the {counterpart_role}.",
+        "match",
+    )
+
+    create_user_notification(
+        requester_uid,
+        "Match confirmation sent",
+        f"We notified the listing owner/finder for '{matched_item_name}'. They can now contact you.",
+        "match",
+    )
+
+    return {"status": "success", "message": "Match confirmed and notifications sent"}
 
 # --- Pydantic Models for Response ---
 
@@ -208,6 +281,7 @@ async def search_items(
                 t['_id'] = str(t['_id'])
                 t['final_score'] = score
                 t['image_url'] = get_image_url(t.get('image_path'))
+                t['phone'] = get_user_phone(t.get('uid'))
                 matches.append(t)
         except Exception as e:
             print(f"Error processing target {t.get('_id')}: {e}")
@@ -301,6 +375,7 @@ async def get_all_items():
         item["_id"] = str(item["_id"])
         item["type"] = "lost"
         item["image_url"] = get_image_url(item.get("image_path"))
+        item["phone"] = get_user_phone(item.get("uid"))
         all_items.append(item)
         
     # Fetch found items – only "active" ones
@@ -309,6 +384,7 @@ async def get_all_items():
         item["_id"] = str(item["_id"])
         item["type"] = "found"
         item["image_url"] = get_image_url(item.get("image_path"))
+        item["phone"] = get_user_phone(item.get("uid"))
         all_items.append(item)
 
     # Sort by creation date descending
@@ -331,6 +407,7 @@ async def get_user_items(uid: str):
             item["_id"] = str(item["_id"])
             item["type"] = item_type
             item["image_url"] = get_image_url(item.get("image_path"))
+            item["phone"] = get_user_phone(item.get("uid"))
             user_items.append(item)
 
     user_items.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
