@@ -18,6 +18,7 @@ export default function AdminRecyclingBinPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const loadRecycled = async () => {
     if (!user) return;
@@ -52,13 +53,15 @@ export default function AdminRecyclingBinPage() {
   };
 
   const onPermanentDelete = async (itemId: string) => {
-    const ok = window.confirm(
-      "Permanently delete this item? This cannot be undone.",
-    );
-    if (!ok) return;
+    setConfirmDeleteId(itemId);
+  };
+
+  const onPermanentDeleteConfirmed = async () => {
+    if (!confirmDeleteId) return;
     try {
-      setBusyId(itemId);
-      await permanentlyDeletePost(user.uid, itemId);
+      setBusyId(confirmDeleteId);
+      await permanentlyDeletePost(user.uid, confirmDeleteId);
+      setConfirmDeleteId(null);
       await loadRecycled();
     } finally {
       setBusyId(null);
@@ -144,6 +147,37 @@ export default function AdminRecyclingBinPage() {
           </Card>
         ))}
       </div>
+
+      {confirmDeleteId ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4">
+          <Card className="w-full max-w-md border-slate-200 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-lg">Confirm Permanent Delete</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-700">
+                Permanently delete this item? This cannot be undone.
+              </p>
+              <div className="mt-4 flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmDeleteId(null)}
+                  disabled={busyId === confirmDeleteId}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={onPermanentDeleteConfirmed}
+                  disabled={busyId === confirmDeleteId}
+                >
+                  Delete Permanently
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
     </AdminLayout>
   );
 }

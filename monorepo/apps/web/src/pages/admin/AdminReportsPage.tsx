@@ -18,6 +18,10 @@ export default function AdminReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    reportId: string;
+    kind: "reject" | "remove";
+  } | null>(null);
 
   const loadReports = async () => {
     if (!user) return;
@@ -42,11 +46,14 @@ export default function AdminReportsPage() {
   if (!isAdmin) return <Navigate to="/dashboard" replace />;
 
   const onRejectReport = async (reportId: string) => {
-    const ok = window.confirm("Reject this report and keep the listing?");
-    if (!ok) return;
+    setPendingAction({ reportId, kind: "reject" });
+  };
+
+  const onRejectReportConfirmed = async (reportId: string) => {
     try {
       setBusyId(reportId);
       await rejectReport(user.uid, reportId);
+      setPendingAction(null);
       await loadReports();
     } finally {
       setBusyId(null);
@@ -54,13 +61,14 @@ export default function AdminReportsPage() {
   };
 
   const onRemoveItem = async (reportId: string) => {
-    const ok = window.confirm(
-      "Remove the reported listing and close this report?",
-    );
-    if (!ok) return;
+    setPendingAction({ reportId, kind: "remove" });
+  };
+
+  const onRemoveItemConfirmed = async (reportId: string) => {
     try {
       setBusyId(reportId);
       await removeReportedItem(user.uid, reportId);
+      setPendingAction(null);
       await loadReports();
     } finally {
       setBusyId(null);
@@ -161,6 +169,44 @@ export default function AdminReportsPage() {
           </Card>
         ))}
       </div>
+
+      {pendingAction ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4">
+          <Card className="w-full max-w-md border-slate-200 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-lg">Confirm Action</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-700">
+                {pendingAction.kind === "remove"
+                  ? "Remove the reported listing and close this report?"
+                  : "Reject this report and keep the listing?"}
+              </p>
+              <div className="mt-4 flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setPendingAction(null)}
+                  disabled={busyId === pendingAction.reportId}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant={pendingAction.kind === "remove" ? "destructive" : "default"}
+                  className={pendingAction.kind === "remove" ? "" : "bg-amber-600 hover:bg-amber-700"}
+                  onClick={() =>
+                    pendingAction.kind === "remove"
+                      ? onRemoveItemConfirmed(pendingAction.reportId)
+                      : onRejectReportConfirmed(pendingAction.reportId)
+                  }
+                  disabled={busyId === pendingAction.reportId}
+                >
+                  Confirm
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
     </AdminLayout>
   );
 }

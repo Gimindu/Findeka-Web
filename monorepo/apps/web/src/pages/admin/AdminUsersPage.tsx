@@ -18,6 +18,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyUid, setBusyUid] = useState<string | null>(null);
+  const [confirmDeleteUid, setConfirmDeleteUid] = useState<string | null>(null);
 
   const loadUsers = async () => {
     if (!user) return;
@@ -56,13 +57,15 @@ export default function AdminUsersPage() {
   };
 
   const onDeleteUser = async (targetUid: string) => {
-    const ok = window.confirm(
-      "Delete this user and all their posts? This cannot be undone.",
-    );
-    if (!ok) return;
+    setConfirmDeleteUid(targetUid);
+  };
+
+  const onDeleteUserConfirmed = async () => {
+    if (!confirmDeleteUid) return;
     try {
-      setBusyUid(targetUid);
-      await deleteUserByAdmin(user.uid, targetUid);
+      setBusyUid(confirmDeleteUid);
+      await deleteUserByAdmin(user.uid, confirmDeleteUid);
+      setConfirmDeleteUid(null);
       await loadUsers();
     } finally {
       setBusyUid(null);
@@ -155,6 +158,37 @@ export default function AdminUsersPage() {
           );
         })}
       </div>
+
+      {confirmDeleteUid ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4">
+          <Card className="w-full max-w-md border-slate-200 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-lg">Confirm Delete User</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-700">
+                Delete this user and all their posts? This cannot be undone.
+              </p>
+              <div className="mt-4 flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmDeleteUid(null)}
+                  disabled={busyUid === confirmDeleteUid}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={onDeleteUserConfirmed}
+                  disabled={busyUid === confirmDeleteUid}
+                >
+                  Delete
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
     </AdminLayout>
   );
 }

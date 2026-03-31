@@ -4,6 +4,7 @@ import { CheckCircle2, XCircle } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getPendingPosts,
@@ -19,6 +20,8 @@ export default function AdminPostReviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmApproveId, setConfirmApproveId] = useState<string | null>(null);
+  const [rejectItemId, setRejectItemId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const loadPending = async () => {
     if (!user) return;
@@ -58,10 +61,17 @@ export default function AdminPostReviewPage() {
   };
 
   const onReject = async (itemId: string) => {
-    const reason = window.prompt("Optional reject reason:", "") ?? "";
+    setRejectItemId(itemId);
+    setRejectReason("");
+  };
+
+  const onRejectConfirmed = async () => {
+    if (!rejectItemId) return;
     try {
-      setBusyId(itemId);
-      await rejectPost(user.uid, itemId, reason);
+      setBusyId(rejectItemId);
+      await rejectPost(user.uid, rejectItemId, rejectReason);
+      setRejectItemId(null);
+      setRejectReason("");
       await loadPending();
     } finally {
       setBusyId(null);
@@ -171,6 +181,46 @@ export default function AdminPostReviewPage() {
           </Card>
         ))}
       </div>
+
+      {rejectItemId ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4">
+          <Card className="w-full max-w-md border-slate-200 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-lg">Reject Post</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-2 text-sm text-slate-700">
+                Add an optional reject reason.
+              </p>
+              <Textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Reason (optional)"
+                rows={4}
+              />
+              <div className="mt-4 flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setRejectItemId(null);
+                    setRejectReason("");
+                  }}
+                  disabled={busyId === rejectItemId}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={onRejectConfirmed}
+                  disabled={busyId === rejectItemId}
+                >
+                  Reject Post
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
     </AdminLayout>
   );
 }
