@@ -2,8 +2,8 @@ import shutil
 import uuid
 import os
 from pathlib import Path
-from datetime import datetime
-from typing import Optional, List
+from datetime import datetime, timezone
+from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -79,6 +79,23 @@ class ConfirmMatchRequest(BaseModel):
     requester_post_type: str
     requester_item_name: str
 
+
+def _utc_now():
+    return datetime.now(timezone.utc)
+
+
+def _append_match_timeline(match_doc: dict, status: str, by_uid: str, note: str = ""):
+    timeline = list(match_doc.get("timeline") or [])
+    timeline.append(
+        {
+            "status": status,
+            "by_uid": by_uid,
+            "note": note,
+            "at": _utc_now(),
+        }
+    )
+    return timeline
+
 from fastapi.staticfiles import StaticFiles
 
 # --- Endpoints ---
@@ -111,19 +128,47 @@ def get_user_phone(uid: Optional[str]) -> Optional[str]:
     return phone or None
 
 
-def create_user_notification(uid: str, title: str, message: str, notif_type: str = "update"):
+def get_user_summary(uid: Optional[str]) -> Dict[str, Any]:
+    if db is None or not uid:
+        return {"uid": uid, "name": None, "phone": None, "location": None}
+    user_doc = db["users"].find_one({"firebase_uid": uid}) or {}
+    first = (user_doc.get("firstName") or "").strip()
+    last = (user_doc.get("lastName") or "").strip()
+    full_name = (f"{first} {last}").strip() or None
+    phone = user_doc.get("phone")
+    if isinstance(phone, str):
+        phone = phone.strip() or None
+    location = user_doc.get("location")
+    if isinstance(location, str):
+        location = location.strip() or None
+    return {
+        "uid": uid,
+        "name": full_name,
+        "phone": phone,
+        "location": location,
+    }
+
+
+def create_user_notification(
+    uid: str,
+    title: str,
+    message: str,
+    notif_type: str = "update",
+    extra: Optional[Dict[str, Any]] = None,
+):
     if db is None or not uid:
         return
-    db["notifications"].insert_one(
-        {
-            "uid": uid,
-            "title": title,
-            "message": message,
-            "type": notif_type,
-            "read": False,
-            "created_at": datetime.now(),
-        }
-    )
+    doc = {
+        "uid": uid,
+        "title": title,
+        "message": message,
+        "type": notif_type,
+        "read": False,
+        "created_at": _utc_now(),
+    }
+    if extra:
+        doc.update(extra)
+    db["notifications"].insert_one(doc)
 
 
 @app.post("/matches/confirm")
@@ -164,12 +209,61 @@ async def confirm_match(body: ConfirmMatchRequest):
 
     counterpart_role = "owner" if requester_post_type == "found" else "finder"
     matched_item_name = (matched_item.get("name") or "your listing").strip()
+    requester_info = get_user_summary(requester_uid)
+    target_info = get_user_summary(matched_uid)
+
+    existing_match = db["matches"].find_one(
+        {
+            "requester_uid": requester_uid,
+            "matched_item_id": body.matched_item_id,
+            "status": {"$in": ["confirmed", "accepted"]},
+        }
+    )
+
+    if existing_match:
+        match_id = str(existing_match["_id"])
+        current_status = existing_match.get("status", "confirmed")
+    else:
+        match_doc = {
+            "requester_uid": requester_uid,
+            "target_uid": matched_uid,
+            "matched_item_id": body.matched_item_id,
+            "requester_post_type": requester_post_type,
+            "requester_item_name": requester_item_name,
+            "matched_item_name": matched_item_name,
+            "status": "confirmed",
+            "timeline": [
+                {
+                    "status": "confirmed",
+                    "by_uid": requester_uid,
+                    "note": "Requester confirmed potential match",
+                    "at": _utc_now(),
+                }
+            ],
+            "created_at": _utc_now(),
+            "updated_at": _utc_now(),
+        }
+        insert_result = db["matches"].insert_one(match_doc)
+        match_id = str(insert_result.inserted_id)
+        current_status = "confirmed"
 
     create_user_notification(
         matched_uid,
         "Potential match confirmed",
         f"A user confirmed '{requester_item_name}' as a match to '{matched_item_name}'. Please check contact details to connect with the {counterpart_role}.",
         "match",
+        {
+            "match_id": match_id,
+            "matched_item_id": body.matched_item_id,
+            "match_status": current_status,
+            "match_action": "review",
+            "counterpart_uid": requester_info.get("uid"),
+            "counterpart_name": requester_info.get("name"),
+            "counterpart_phone": requester_info.get("phone"),
+            "counterpart_location": requester_info.get("location"),
+            "counterpart_role": counterpart_role,
+            "counterpart_item_name": requester_item_name,
+        },
     )
 
     create_user_notification(
@@ -177,9 +271,203 @@ async def confirm_match(body: ConfirmMatchRequest):
         "Match confirmation sent",
         f"We notified the listing owner/finder for '{matched_item_name}'. They can now contact you.",
         "match",
+        {
+            "match_id": match_id,
+            "matched_item_id": body.matched_item_id,
+            "match_status": current_status,
+            "match_action": "none",
+            "counterpart_uid": target_info.get("uid"),
+            "counterpart_name": target_info.get("name"),
+            "counterpart_phone": target_info.get("phone"),
+            "counterpart_location": target_info.get("location"),
+            "counterpart_role": "owner" if counterpart_role == "finder" else "finder",
+            "counterpart_item_name": matched_item_name,
+        },
     )
 
-    return {"status": "success", "message": "Match confirmed and notifications sent"}
+    return {
+        "status": "success",
+        "message": "Match confirmed and notifications sent",
+        "match_id": match_id,
+        "match_status": current_status,
+    }
+
+
+@app.get("/matches/{match_id}")
+async def get_match(match_id: str, uid: str):
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    from bson import ObjectId
+
+    try:
+        match_doc = db["matches"].find_one({"_id": ObjectId(match_id)})
+    except Exception:
+        match_doc = None
+
+    if not match_doc:
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    if uid not in [match_doc.get("requester_uid"), match_doc.get("target_uid")]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    match_doc["_id"] = str(match_doc["_id"])
+    return {"match": match_doc}
+
+
+@app.post("/matches/{match_id}/accept")
+async def accept_match(match_id: str, uid: str):
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    from bson import ObjectId
+
+    match_doc = db["matches"].find_one({"_id": ObjectId(match_id)})
+    if not match_doc:
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    requester_uid = match_doc.get("requester_uid")
+    target_uid = match_doc.get("target_uid")
+    if uid not in [requester_uid, target_uid]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if match_doc.get("status") in ["rejected", "completed"]:
+        raise HTTPException(status_code=400, detail="Match is already closed")
+
+    updated_timeline = _append_match_timeline(match_doc, "accepted", uid, "Counterpart accepted match")
+    db["matches"].update_one(
+        {"_id": ObjectId(match_id)},
+        {
+            "$set": {
+                "status": "accepted",
+                "timeline": updated_timeline,
+                "updated_at": _utc_now(),
+            }
+        },
+    )
+
+    for participant_uid in [requester_uid, target_uid]:
+        counterpart_uid = target_uid if participant_uid == requester_uid else requester_uid
+        counterpart_role = "owner" if participant_uid == requester_uid else "finder"
+        counterpart_item_name = (
+            match_doc.get("matched_item_name")
+            if participant_uid == requester_uid
+            else match_doc.get("requester_item_name")
+        )
+        counterpart_info = get_user_summary(counterpart_uid)
+        create_user_notification(
+            participant_uid,
+            "Match accepted",
+            "Both sides can now contact each other. Mark as completed after handover.",
+            "match",
+            {
+                "match_id": match_id,
+                "matched_item_id": match_doc.get("matched_item_id"),
+                "match_status": "accepted",
+                "match_action": "complete",
+                "counterpart_uid": counterpart_info.get("uid"),
+                "counterpart_name": counterpart_info.get("name"),
+                "counterpart_phone": counterpart_info.get("phone"),
+                "counterpart_location": counterpart_info.get("location"),
+                "counterpart_role": counterpart_role,
+                "counterpart_item_name": counterpart_item_name,
+            },
+        )
+
+    return {"status": "success", "match_status": "accepted"}
+
+
+@app.post("/matches/{match_id}/reject")
+async def reject_match(match_id: str, uid: str):
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    from bson import ObjectId
+
+    match_doc = db["matches"].find_one({"_id": ObjectId(match_id)})
+    if not match_doc:
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    requester_uid = match_doc.get("requester_uid")
+    target_uid = match_doc.get("target_uid")
+    if uid not in [requester_uid, target_uid]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if match_doc.get("status") in ["rejected", "completed"]:
+        raise HTTPException(status_code=400, detail="Match is already closed")
+
+    updated_timeline = _append_match_timeline(match_doc, "rejected", uid, "Counterpart rejected match")
+    db["matches"].update_one(
+        {"_id": ObjectId(match_id)},
+        {
+            "$set": {
+                "status": "rejected",
+                "timeline": updated_timeline,
+                "updated_at": _utc_now(),
+            }
+        },
+    )
+
+    other_uid = requester_uid if uid == target_uid else target_uid
+    create_user_notification(
+        other_uid,
+        "Match rejected",
+        "The other user marked this as not a valid match.",
+        "match",
+        {
+            "match_id": match_id,
+            "matched_item_id": match_doc.get("matched_item_id"),
+            "match_status": "rejected",
+            "match_action": "none",
+        },
+    )
+
+    return {"status": "success", "match_status": "rejected"}
+
+
+@app.post("/matches/{match_id}/complete")
+async def complete_match(match_id: str, uid: str):
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    from bson import ObjectId
+
+    match_doc = db["matches"].find_one({"_id": ObjectId(match_id)})
+    if not match_doc:
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    requester_uid = match_doc.get("requester_uid")
+    target_uid = match_doc.get("target_uid")
+    if uid not in [requester_uid, target_uid]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if match_doc.get("status") != "accepted":
+        raise HTTPException(status_code=400, detail="Only accepted matches can be completed")
+
+    updated_timeline = _append_match_timeline(match_doc, "completed", uid, "Handover completed")
+    db["matches"].update_one(
+        {"_id": ObjectId(match_id)},
+        {
+            "$set": {
+                "status": "completed",
+                "timeline": updated_timeline,
+                "updated_at": _utc_now(),
+                "completed_at": _utc_now(),
+            }
+        },
+    )
+
+    for participant_uid in [requester_uid, target_uid]:
+        create_user_notification(
+            participant_uid,
+            "Handover completed",
+            "This match has been marked as completed.",
+            "update",
+            {
+                "match_id": match_id,
+                "matched_item_id": match_doc.get("matched_item_id"),
+                "match_status": "completed",
+                "match_action": "none",
+            },
+        )
+
+    return {"status": "success", "match_status": "completed"}
 
 # --- Pydantic Models for Response ---
 
@@ -512,6 +800,15 @@ async def mark_notification_read(notification_id: str, uid: str):
     if not result.matched_count:
         raise HTTPException(status_code=404, detail="Notification not found")
     return {"status": "success"}
+
+
+@app.delete("/user/notifications/clear")
+async def clear_user_notifications(uid: str):
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+
+    result = db["notifications"].delete_many({"uid": uid})
+    return {"status": "success", "deleted": result.deleted_count}
 
 @app.delete("/items/{item_id}")
 async def delete_item(item_id: str):

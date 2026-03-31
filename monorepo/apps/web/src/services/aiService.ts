@@ -51,6 +51,34 @@ export interface UserNotification {
     type: "match" | "system" | "update" | "alert" | string;
     read: boolean;
     created_at?: string;
+    match_id?: string;
+    matched_item_id?: string;
+    match_status?: string;
+    match_action?: string;
+    counterpart_uid?: string;
+    counterpart_name?: string;
+    counterpart_phone?: string;
+    counterpart_location?: string;
+    counterpart_role?: string;
+    counterpart_item_name?: string;
+    [key: string]: any;
+}
+
+export interface MatchRecord {
+    _id: string;
+    requester_uid: string;
+    target_uid: string;
+    matched_item_id: string;
+    requester_post_type: "lost" | "found" | string;
+    requester_item_name: string;
+    matched_item_name: string;
+    status: "confirmed" | "accepted" | "rejected" | "completed" | string;
+    timeline?: Array<{
+        status: string;
+        by_uid: string;
+        note?: string;
+        at?: string;
+    }>;
     [key: string]: any;
 }
 
@@ -138,6 +166,51 @@ export const confirmMatch = async (
         throw new Error(data?.detail || "Failed to confirm match");
     }
     userNotificationsCache.delete(requesterUid);
+    return res.json();
+};
+
+export const acceptMatch = async (uid: string, matchId: string) => {
+    const res = await fetch(`${API_URL}/matches/${matchId}/accept?uid=${encodeURIComponent(uid)}`, {
+        method: "POST",
+    });
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.detail || "Failed to accept match");
+    }
+    userNotificationsCache.delete(uid);
+    return res.json();
+};
+
+export const rejectMatch = async (uid: string, matchId: string) => {
+    const res = await fetch(`${API_URL}/matches/${matchId}/reject?uid=${encodeURIComponent(uid)}`, {
+        method: "POST",
+    });
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.detail || "Failed to reject match");
+    }
+    userNotificationsCache.delete(uid);
+    return res.json();
+};
+
+export const completeMatch = async (uid: string, matchId: string) => {
+    const res = await fetch(`${API_URL}/matches/${matchId}/complete?uid=${encodeURIComponent(uid)}`, {
+        method: "POST",
+    });
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.detail || "Failed to complete match");
+    }
+    userNotificationsCache.delete(uid);
+    return res.json();
+};
+
+export const getMatch = async (uid: string, matchId: string): Promise<{ match: MatchRecord }> => {
+    const res = await fetch(`${API_URL}/matches/${matchId}?uid=${encodeURIComponent(uid)}`);
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.detail || "Failed to fetch match");
+    }
     return res.json();
 };
 
@@ -413,6 +486,16 @@ export const markAllNotificationsRead = async (uid: string) => {
         method: "POST",
     });
     if (!res.ok) throw new Error("Failed to mark all notifications as read");
+    const result = await res.json();
+    userNotificationsCache.delete(uid);
+    return result;
+};
+
+export const clearUserNotifications = async (uid: string) => {
+    const res = await fetch(`${API_URL}/user/notifications/clear?uid=${uid}`, {
+        method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to clear notifications");
     const result = await res.json();
     userNotificationsCache.delete(uid);
     return result;

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   MapPin,
   UploadCloud,
@@ -27,10 +27,11 @@ import {
   searchItems,
   submitItem,
   confirmMatch,
+  fetchAllItems,
   ItemMatch,
 } from "@/services/aiService";
 import { ITEM_CATEGORIES } from "@/data/itemCategories";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
 const categories = ITEM_CATEGORIES;
@@ -64,17 +65,21 @@ const commonLocations = [
 
 export default function ReportItemPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [postType, setPostType] = useState<"lost" | "found">("lost");
   const [matches, setMatches] = useState<ItemMatch[]>([]);
   const [showMatchesModal, setShowMatchesModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<ItemMatch | null>(null);
+  const [matchConfirmed, setMatchConfirmed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Custom Success Modal State
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [reportedId, setReportedId] = useState("");
+  const [requesterItemNameForMatch, setRequesterItemNameForMatch] =
+    useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [postData, setPostData] = useState({
@@ -89,6 +94,25 @@ export default function ReportItemPage() {
     photos: [] as File[],
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getEmptyPostData = () => ({
+    title: "",
+    category: "",
+    subcategory: "",
+    location: "",
+    date: "",
+    color: "",
+    description: "",
+    reward: "",
+    photos: [] as File[],
+  });
+
+  const resetFormFields = () => {
+    setPostData(getEmptyPostData());
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setPostData({
@@ -139,13 +163,17 @@ export default function ReportItemPage() {
       console.log("SENDING SEARCH...");
       const result = await searchItems(formData);
       console.log("SEARCH RESULT:", result);
+      setRequesterItemNameForMatch(postData.title || "reported item");
 
       if (result.matches && result.matches.length > 0) {
         setMatches(result.matches);
+        setMatchConfirmed(false);
         setShowMatchesModal(true);
+        resetFormFields();
       } else {
         // No matches, direct submit
         await performSubmit(formData);
+        resetFormFields();
       }
     } catch (err: any) {
       console.error("Error:", err);
@@ -190,6 +218,7 @@ export default function ReportItemPage() {
     }
 
     await performSubmit(formData);
+    resetFormFields();
     setIsLoading(false);
   };
 
@@ -210,20 +239,54 @@ export default function ReportItemPage() {
         user.uid,
         selectedMatch._id,
         postType,
-        postData.title || "reported item",
+        requesterItemNameForMatch || "reported item",
       );
-      setSelectedMatch(null);
-      setShowMatchesModal(false);
-      setSuccessMessage(
-        "Match confirmed. The other user has been notified and can contact you.",
-      );
-      setShowSuccessModal(true);
+      setMatchConfirmed(true);
     } catch (err: any) {
       setErrorMsg(err?.message || "Failed to confirm match.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const matchItemId = params.get("matchItemId");
+    if (!matchItemId) return;
+
+    let cancelled = false;
+
+    const openMatchedItem = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchAllItems(true);
+        const matchedItem = (data.items || []).find(
+          (item) => item._id === matchItemId,
+        );
+
+        if (!matchedItem || cancelled) return;
+
+        setMatches([matchedItem]);
+        setShowMatchesModal(true);
+        setSelectedMatch(matchedItem);
+        setMatchConfirmed(false);
+      } catch (err: any) {
+        if (!cancelled) {
+          setErrorMsg(err?.message || "Failed to open matched item.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    openMatchedItem();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.search]);
 
   return (
     <DashboardLayout>
@@ -533,7 +596,10 @@ export default function ReportItemPage() {
                         <Button
                           className="w-full"
                           variant="outline"
-                          onClick={() => setSelectedMatch(match)}
+                          onClick={() => {
+                            setMatchConfirmed(false);
+                            setSelectedMatch(match);
+                          }}
                         >
                           View Details
                         </Button>
@@ -643,22 +709,32 @@ export default function ReportItemPage() {
                     </p>
                   </div>
 
+                  {matchConfirmed && (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+                      Match confirmed. The other user has been notified. You can
+                      call now.
+                    </div>
+                  )}
+
                   <div className="pt-4 flex flex-col gap-3 sm:flex-row">
                     <Button
                       className="flex-1 bg-blue-600 hover:bg-blue-700"
                       onClick={handleConfirmMatch}
-                      disabled={isLoading}
+                      disabled={isLoading || matchConfirmed}
                     >
                       {isLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Sending...
                         </>
+                      ) : matchConfirmed ? (
+                        "Match confirmed"
                       ) : (
                         "It's a match"
                       )}
                     </Button>
-                    {selectedMatch.phone ? (
+
+                    {matchConfirmed && selectedMatch.phone ? (
                       <a
                         href={`tel:${selectedMatch.phone}`}
                         className="flex-1 flex"
@@ -669,12 +745,13 @@ export default function ReportItemPage() {
                           {selectedMatch.phone})
                         </Button>
                       </a>
-                    ) : (
+                    ) : matchConfirmed ? (
                       <Button className="flex-1" variant="outline" disabled>
                         <Phone className="w-4 h-4 mr-2" /> No phone number
                         available
                       </Button>
-                    )}
+                    ) : null}
+
                     <Button
                       className="flex-1"
                       variant="outline"

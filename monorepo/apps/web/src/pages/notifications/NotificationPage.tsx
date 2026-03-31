@@ -5,16 +5,27 @@ import { Check, Info, AlertTriangle, Search, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   UserNotification,
+  acceptMatch,
+  completeMatch,
+  clearUserNotifications,
+  getMatch,
   getUserNotifications,
   markAllNotificationsRead,
   markNotificationRead,
+  rejectMatch,
 } from "@/services/aiService";
 
 function timeAgo(dateValue?: string) {
   if (!dateValue) return "Just now";
-  const then = new Date(dateValue).getTime();
+  // Backward compatibility: older records may store ISO without timezone.
+  // Treat timezone-less timestamps as UTC to avoid local-time offset errors.
+  const normalizedDateValue = /Z|[+-]\d\d:\d\d$/.test(dateValue)
+    ? dateValue
+    : `${dateValue}Z`;
+  const then = new Date(normalizedDateValue).getTime();
   const now = Date.now();
   const diffSec = Math.max(1, Math.floor((now - then) / 1000));
   if (diffSec < 60) return `${diffSec}s ago`;
@@ -27,10 +38,18 @@ function timeAgo(dateValue?: string) {
 }
 
 export default function NotificationPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [timelines, setTimelines] = useState<Record<string, any[]>>({});
+  const [timelineLoading, setTimelineLoading] = useState<
+    Record<string, boolean>
+  >({});
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.read).length,
@@ -66,6 +85,18 @@ export default function NotificationPage() {
     }
   };
 
+  const handleClearAll = async () => {
+    if (!user || notifications.length === 0) return;
+    try {
+      await clearUserNotifications(user.uid);
+      setNotifications([]);
+      setTimelines({});
+      setError(null);
+    } catch (err: any) {
+      setError(err?.message || "Failed to clear notifications");
+    }
+  };
+
   const handleMarkRead = async (notifId: string) => {
     if (!user) return;
     try {
@@ -75,6 +106,61 @@ export default function NotificationPage() {
       );
     } catch {
       setError("Failed to mark notification as read");
+    }
+  };
+
+  const setNotifLoading = (notifId: string, value: boolean) => {
+    setActionLoading((prev) => ({ ...prev, [notifId]: value }));
+  };
+
+  const handleMatchAction = async (
+    notif: UserNotification,
+    action: "accept" | "reject" | "complete",
+  ) => {
+    if (!user || !notif.match_id) return;
+    try {
+      setNotifLoading(notif._id, true);
+      if (action === "accept") {
+        await acceptMatch(user.uid, notif.match_id);
+      } else if (action === "reject") {
+        await rejectMatch(user.uid, notif.match_id);
+      } else {
+        await completeMatch(user.uid, notif.match_id);
+      }
+      await loadNotifications();
+    } catch (err: any) {
+      setError(err?.message || "Failed to process match action");
+    } finally {
+      setNotifLoading(notif._id, false);
+    }
+  };
+
+  const handleOpenItem = (notif: UserNotification) => {
+    if (!notif.matched_item_id) return;
+    navigate(`/report-item?matchItemId=${notif.matched_item_id}`);
+  };
+
+  const handleToggleTimeline = async (notif: UserNotification) => {
+    if (!user || !notif.match_id) return;
+    if (timelines[notif._id]) {
+      setTimelines((prev) => {
+        const next = { ...prev };
+        delete next[notif._id];
+        return next;
+      });
+      return;
+    }
+    try {
+      setTimelineLoading((prev) => ({ ...prev, [notif._id]: true }));
+      const data = await getMatch(user.uid, notif.match_id);
+      setTimelines((prev) => ({
+        ...prev,
+        [notif._id]: data.match.timeline || [],
+      }));
+    } catch (err: any) {
+      setError(err?.message || "Failed to load timeline");
+    } finally {
+      setTimelineLoading((prev) => ({ ...prev, [notif._id]: false }));
     }
   };
 
@@ -90,15 +176,26 @@ export default function NotificationPage() {
               Stay updated with your latest activity.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full sm:w-auto text-slate-600"
-            onClick={handleMarkAllRead}
-            disabled={unreadCount === 0}
-          >
-            <Check className="h-4 w-4 mr-2" /> Mark all as read
-          </Button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto text-slate-600"
+              onClick={handleMarkAllRead}
+              disabled={unreadCount === 0}
+            >
+              <Check className="h-4 w-4 mr-2" /> Mark all as read
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50"
+              onClick={handleClearAll}
+              disabled={notifications.length === 0}
+            >
+              Clear notifications
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -162,6 +259,141 @@ export default function NotificationPage() {
                   </span>
                 </div>
                 <p className="text-slate-600 text-sm mt-1">{notif.message}</p>
+
+                {(notif.counterpart_name || notif.counterpart_uid) && (
+                  <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2">
+                    <p className="text-xs font-semibold text-amber-700">
+                      {notif.counterpart_role
+                        ? `${String(notif.counterpart_role).charAt(0).toUpperCase()}${String(notif.counterpart_role).slice(1)} details`
+                        : "User details"}
+                    </p>
+                    <p className="text-xs text-amber-800 mt-1">
+                      Name: {notif.counterpart_name || "Not provided"}
+                    </p>
+                    <p className="text-xs text-amber-800">
+                      UID: {notif.counterpart_uid || "Not available"}
+                    </p>
+                    {notif.counterpart_location ? (
+                      <p className="text-xs text-amber-800">
+                        Location: {notif.counterpart_location}
+                      </p>
+                    ) : null}
+                    {notif.counterpart_item_name ? (
+                      <p className="text-xs text-amber-800">
+                        Item: {notif.counterpart_item_name}
+                      </p>
+                    ) : null}
+                    {notif.counterpart_phone ? (
+                      <a
+                        href={`tel:${notif.counterpart_phone}`}
+                        className="inline-block mt-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                        >
+                          Call {notif.counterpart_phone}
+                        </Button>
+                      </a>
+                    ) : (
+                      <p className="text-xs text-amber-700 mt-1">
+                        Phone: Not provided
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {notif.type === "match" && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {notif.match_action === "review" && (
+                      <>
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                          disabled={!!actionLoading[notif._id]}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMatchAction(notif, "accept");
+                          }}
+                        >
+                          Accept Match
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!!actionLoading[notif._id]}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMatchAction(notif, "reject");
+                          }}
+                        >
+                          Reject
+                        </Button>
+                      </>
+                    )}
+
+                    {notif.match_action === "complete" && (
+                      <Button
+                        size="sm"
+                        className="bg-indigo-600 hover:bg-indigo-700"
+                        disabled={!!actionLoading[notif._id]}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMatchAction(notif, "complete");
+                        }}
+                      >
+                        Mark Handover Complete
+                      </Button>
+                    )}
+
+                    {notif.matched_item_id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenItem(notif);
+                        }}
+                      >
+                        Open Item
+                      </Button>
+                    )}
+
+                    {notif.match_id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleTimeline(notif);
+                        }}
+                        disabled={!!timelineLoading[notif._id]}
+                      >
+                        {timelineLoading[notif._id]
+                          ? "Loading timeline..."
+                          : timelines[notif._id]
+                            ? "Hide Timeline"
+                            : "View Timeline"}
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {timelines[notif._id] && (
+                  <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+                    <p className="text-xs font-semibold text-slate-500 mb-1">
+                      Match Timeline
+                    </p>
+                    <div className="space-y-1">
+                      {timelines[notif._id].map((step: any, idx: number) => (
+                        <p key={idx} className="text-xs text-slate-600">
+                          {step.status} - {timeAgo(step.at)}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               {!notif.read && (
                 <div className="flex items-center">
