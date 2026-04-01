@@ -1,3 +1,5 @@
+"""Model manager for loading and storing ML models used by the service."""
+
 import os
 import sys
 

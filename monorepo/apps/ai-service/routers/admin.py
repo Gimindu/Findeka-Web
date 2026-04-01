@@ -1,3 +1,5 @@
+"""Admin moderation endpoints: review posts, users, and safety reports."""
+
 import os
 from datetime import datetime
 
@@ -110,6 +112,7 @@ async def admin_reject_post(item_id: str, uid: str, reason: str = ""):
 
 @router.get("/admin/posts/recycled")
 async def admin_recycled_posts(uid: str):
+    # Recycle bin view for previously rejected posts.
     db = require_db()
     require_admin(uid)
 
@@ -171,6 +174,7 @@ async def admin_delete_post_permanent(item_id: str, uid: str):
 
 @router.get("/admin/users")
 async def admin_get_users(uid: str):
+    # Basic user listing for moderation/admin panels.
     db = require_db()
     require_admin(uid)
 
@@ -183,6 +187,7 @@ async def admin_get_users(uid: str):
 
 @router.post("/admin/users/{target_uid}/suspend")
 async def admin_suspend_user(target_uid: str, uid: str):
+    # Soft block account activity without deleting user data.
     db = require_db()
     require_admin(uid)
 
@@ -196,6 +201,7 @@ async def admin_suspend_user(target_uid: str, uid: str):
 
 @router.post("/admin/users/{target_uid}/unsuspend")
 async def admin_unsuspend_user(target_uid: str, uid: str):
+    # Re-enable account after review.
     db = require_db()
     require_admin(uid)
 
@@ -231,6 +237,7 @@ async def admin_delete_user(target_uid: str, uid: str):
 
 @router.get("/admin/reports")
 async def admin_get_reports(uid: str):
+    # Report inbox with linked item details for faster moderation decisions.
     db = require_db()
     require_admin(uid)
     from bson import ObjectId
@@ -258,6 +265,7 @@ async def admin_get_reports(uid: str):
 
 @router.post("/admin/reports/{report_id}/resolve")
 async def admin_resolve_report(report_id: str, uid: str):
+    # Resolve when report is handled but listing stays.
     db = require_db()
     require_admin(uid)
     from bson import ObjectId
@@ -285,6 +293,7 @@ async def admin_resolve_report(report_id: str, uid: str):
 
 @router.post("/admin/reports/{report_id}/reject")
 async def admin_reject_report(report_id: str, uid: str):
+    # Reject means report closed and listing remains active.
     db = require_db()
     require_admin(uid)
     from bson import ObjectId

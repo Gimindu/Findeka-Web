@@ -1,3 +1,5 @@
+"""Public item endpoints: search, submit, list, delete, and report flows."""
+
 import os
 import shutil
 import uuid
@@ -30,14 +32,17 @@ async def search_items(
     Receives an item report & image.
     Scans the opposite collection and returns potential matches.
     """
+    # Search is read-heavy; keep the flow explicit and easy to tune later.
     db = require_db()
 
     mode = type.lower()
     if mode not in ["lost", "found"]:
         raise HTTPException(status_code=400, detail="Invalid type. Must be 'lost' or 'found'")
 
+    # Lost searches against found listings, and vice versa.
     target_col_name = "found_items" if mode == "lost" else "lost_items"
 
+    # Save uploaded query image to temp folder so feature extractors can read it.
     query_img_path = None
     if image:
         temp_dir = STORAGE_DIR / "temp"
@@ -50,6 +55,7 @@ async def search_items(
             shutil.copyfileobj(image.file, buffer)
         query_img_path = str(query_img_path)
 
+    # Normalized query payload consumed by text/image scoring.
     query_item = {
         "name": name,
         "description": description,
@@ -66,12 +72,14 @@ async def search_items(
         print(f"Feature extraction failed: {e}")
         return {"matches": [], "message": f"Feature extraction failed: {str(e)}"}
 
+    # Only active posts should be match candidates.
     targets = list(db[target_col_name].find({"status": "active"}))
     matches = []
 
     print(f"Scanning {len(targets)} items in {target_col_name}...")
 
     for t in targets:
+        # Fast category gate before expensive model calls.
         if str(query_item.get("category", "")).lower().strip() != str(t.get("category", "")).lower().strip():
             continue
 
@@ -80,6 +88,7 @@ async def search_items(
             t_feats = extract_features(t, t_path)
             score = calculate_match_score(query_item, query_img_path, q_feats, t, t_path, t_feats)
 
+            # Tunable threshold. Raise for precision, lower for recall.
             if score > 0.4:
                 t["_id"] = str(t["_id"])
                 t["final_score"] = score
@@ -90,6 +99,7 @@ async def search_items(
             print(f"Error processing target {t.get('_id')}: {e}")
             continue
 
+    # Return top 5 best candidates to keep response quick and focused.
     matches = sorted(matches, key=lambda x: x["final_score"], reverse=True)
     return {"matches": matches[:5]}
 
@@ -108,6 +118,7 @@ async def submit_item(
     uid: str = Form(None),
 ):
     """Saves the item to the database."""
+    # Submissions start in pending; admins decide visibility.
     db = require_db()
 
     mode = type.lower()
@@ -127,6 +138,7 @@ async def submit_item(
             shutil.copyfileobj(image.file, buffer)
         saved_img_path = str(saved_img_path)
 
+    # Keep date field aligned with post type for easier legacy compatibility.
     item_doc = {
         "name": name,
         "description": description,
@@ -148,6 +160,7 @@ async def submit_item(
 @router.get("/items")
 async def get_all_items():
     """Fetches active items from both collections."""
+    # Public listing endpoint used by browse/search pages.
     _db = require_db()
 
     all_items = []
@@ -174,6 +187,7 @@ async def get_all_items():
 
 @router.delete("/items/{item_id}")
 async def delete_item(item_id: str):
+    # Remove uploaded image as part of cleanup to avoid disk leaks.
     db = require_db()
     from bson import ObjectId
 
@@ -204,6 +218,7 @@ class ReportRequest(BaseModel):
 @router.post("/items/{item_id}/report")
 async def report_item(item_id: str, body: ReportRequest):
     """Flag an item as suspicious."""
+    # Reporting creates a moderation ticket for admin review.
     db = require_db()
     from bson import ObjectId
 
@@ -219,6 +234,7 @@ async def report_item(item_id: str, body: ReportRequest):
     if not found:
         raise HTTPException(status_code=404, detail="Item not found")
 
+    # App-level duplicate guard (DB unique index exists as backup safety).
     existing = db["reports"].find_one(
         {
             "item_id": item_id,

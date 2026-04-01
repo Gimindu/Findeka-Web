@@ -1,3 +1,5 @@
+"""Utility functions for image handling, OCR prep, and feature helpers."""
+
 import os
 import cv2
 import numpy as np

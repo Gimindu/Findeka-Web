@@ -1,3 +1,5 @@
+"""Match lifecycle endpoints: confirm, accept, reject, complete, and fetch."""
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -22,6 +24,7 @@ class ConfirmMatchRequest(BaseModel):
 @router.post("/matches/confirm")
 async def confirm_match(body: ConfirmMatchRequest):
     """Confirm a potential match and notify both sides."""
+    # This creates (or reuses) a match conversation between two different users.
     db = require_db()
 
     requester_uid = (body.requester_uid or "").strip()
@@ -35,6 +38,7 @@ async def confirm_match(body: ConfirmMatchRequest):
 
     from bson import ObjectId
 
+    # Item can live in either collection, so check both.
     matched_item = None
     for coll_name in ["lost_items", "found_items"]:
         try:
@@ -59,6 +63,7 @@ async def confirm_match(body: ConfirmMatchRequest):
     requester_info = get_user_summary(requester_uid)
     target_info = get_user_summary(matched_uid)
 
+    # Avoid creating duplicate active match records for same requester/item pair.
     existing_match = db["matches"].find_one(
         {
             "requester_uid": requester_uid,
@@ -94,6 +99,7 @@ async def confirm_match(body: ConfirmMatchRequest):
         match_id = str(insert_result.inserted_id)
         current_status = "confirmed"
 
+    # Notify owner/finder first with requester contact details.
     create_user_notification(
         matched_uid,
         "Potential match confirmed",
@@ -113,6 +119,7 @@ async def confirm_match(body: ConfirmMatchRequest):
         },
     )
 
+    # Confirm back to requester so UI can show a clear state.
     create_user_notification(
         requester_uid,
         "Match confirmation sent",
@@ -142,6 +149,7 @@ async def confirm_match(body: ConfirmMatchRequest):
 
 @router.get("/matches/{match_id}")
 async def get_match(match_id: str, uid: str):
+    # Only participants can view match details.
     db = require_db()
     from bson import ObjectId
 
@@ -162,6 +170,7 @@ async def get_match(match_id: str, uid: str):
 
 @router.post("/matches/{match_id}/accept")
 async def accept_match(match_id: str, uid: str):
+    # Accepting opens two-way contact and enables completion action.
     db = require_db()
     from bson import ObjectId
 
@@ -189,6 +198,7 @@ async def accept_match(match_id: str, uid: str):
         },
     )
 
+    # Notify both sides with counterpart contact information.
     for participant_uid in [requester_uid, target_uid]:
         counterpart_uid = target_uid if participant_uid == requester_uid else requester_uid
         counterpart_role = "owner" if participant_uid == requester_uid else "finder"
@@ -222,6 +232,7 @@ async def accept_match(match_id: str, uid: str):
 
 @router.post("/matches/{match_id}/reject")
 async def reject_match(match_id: str, uid: str):
+    # Rejecting closes the current match thread.
     db = require_db()
     from bson import ObjectId
 
@@ -268,6 +279,7 @@ async def reject_match(match_id: str, uid: str):
 
 @router.post("/matches/{match_id}/complete")
 async def complete_match(match_id: str, uid: str):
+    # Completion is only valid after both sides reached accepted state.
     db = require_db()
     from bson import ObjectId
 

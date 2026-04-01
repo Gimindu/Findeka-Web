@@ -1,3 +1,5 @@
+"""Feature extraction and match scoring logic for lost-and-found comparison."""
+
 import torch
 import numpy as np
 import os

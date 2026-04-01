@@ -1,3 +1,5 @@
+"""Central configuration for paths, model files, and Mongo connection settings."""
+
 import os
 from pathlib import Path
 

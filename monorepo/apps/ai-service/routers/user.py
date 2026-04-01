@@ -1,3 +1,5 @@
+"""User-facing endpoints: profile, settings, user items, and notifications."""
+
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
@@ -10,6 +12,7 @@ router = APIRouter()
 @router.get("/user/items")
 async def get_user_items(uid: str):
     """Fetches all items submitted by a specific user."""
+    # Personal history endpoint; includes pending/rejected posts too.
     db = require_db()
 
     user_items = []
@@ -28,6 +31,7 @@ async def get_user_items(uid: str):
 
 @router.get("/user/profile")
 async def get_user_profile(uid: str):
+    # Return a sane default profile so first-time users get usable UI immediately.
     db = require_db()
     user = db["users"].find_one({"firebase_uid": uid})
     if not user:
@@ -45,6 +49,7 @@ async def get_user_profile(uid: str):
 
 @router.put("/user/profile")
 async def update_user_profile(uid: str, data: dict):
+    # Prevent accidental overwrite of Mongo _id from client payload.
     db = require_db()
 
     if "_id" in data:
@@ -60,6 +65,7 @@ async def update_user_profile(uid: str, data: dict):
 
 @router.get("/user/settings")
 async def get_user_settings(uid: str):
+    # Default settings keep alerts on unless user opts out.
     db = require_db()
 
     settings = db["user_settings"].find_one({"firebase_uid": uid})
@@ -80,6 +86,7 @@ async def get_user_settings(uid: str):
 
 @router.put("/user/settings")
 async def update_user_settings(uid: str, data: dict):
+    # Upsert lets frontend save settings even if row does not exist yet.
     db = require_db()
 
     if "_id" in data:
@@ -95,6 +102,7 @@ async def update_user_settings(uid: str, data: dict):
 
 @router.get("/user/notifications")
 async def get_user_notifications(uid: str):
+    # Latest first, hard cap for predictable payload size.
     db = require_db()
 
     notifications = []
@@ -106,6 +114,7 @@ async def get_user_notifications(uid: str):
 
 @router.post("/user/notifications/read-all")
 async def mark_all_notifications_read(uid: str):
+    # Bulk mark to reduce repeated API calls from the client.
     db = require_db()
 
     db["notifications"].update_many(
@@ -117,6 +126,7 @@ async def mark_all_notifications_read(uid: str):
 
 @router.post("/user/notifications/{notification_id}/read")
 async def mark_notification_read(notification_id: str, uid: str):
+    # Single-item read endpoint for notification detail view.
     db = require_db()
     from bson import ObjectId
 
@@ -131,6 +141,7 @@ async def mark_notification_read(notification_id: str, uid: str):
 
 @router.delete("/user/notifications/clear")
 async def clear_user_notifications(uid: str):
+    # Hard clear for users who want a clean inbox quickly.
     db = require_db()
 
     result = db["notifications"].delete_many({"uid": uid})

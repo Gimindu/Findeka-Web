@@ -1,3 +1,5 @@
+"""Shared app state and helper utilities for DB, timestamps, and notifications."""
+
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -12,6 +14,7 @@ db = None
 
 
 def init_db() -> None:
+    # Single Mongo client shared by the API process.
     global mongo_client, db
     mongo_client = MongoClient(MONGO_URI)
     db = mongo_client[DB_NAME]
@@ -29,6 +32,7 @@ def init_db() -> None:
 
 
 def close_db() -> None:
+    # Called during shutdown; safe to call multiple times.
     global mongo_client
     if mongo_client:
         mongo_client.close()
@@ -36,10 +40,12 @@ def close_db() -> None:
 
 
 def get_db():
+    # Light accessor used by helper methods.
     return db
 
 
 def require_db():
+    # Fail fast when startup did not initialize the database.
     current_db = get_db()
     if current_db is None:
         raise HTTPException(status_code=500, detail="Database not connected")
@@ -47,10 +53,12 @@ def require_db():
 
 
 def utc_now() -> datetime:
+    # Always use UTC timestamps to avoid timezone drift between clients.
     return datetime.now(timezone.utc)
 
 
 def append_match_timeline(match_doc: dict, status: str, by_uid: str, note: str = ""):
+    # Immutable-style update so callers can write one clean $set to Mongo.
     timeline = list(match_doc.get("timeline") or [])
     timeline.append(
         {
@@ -76,6 +84,7 @@ def get_image_url(image_path: str) -> Optional[str]:
 
 
 def get_user_phone(uid: Optional[str]) -> Optional[str]:
+    # Helper for list endpoints that expose contact details.
     current_db = get_db()
     if current_db is None or not uid:
         return None
@@ -87,6 +96,7 @@ def get_user_phone(uid: Optional[str]) -> Optional[str]:
 
 
 def get_user_summary(uid: Optional[str]) -> Dict[str, Any]:
+    # Small public profile block used in match notifications.
     current_db = get_db()
     if current_db is None or not uid:
         return {"uid": uid, "name": None, "phone": None, "location": None}
@@ -119,6 +129,7 @@ def create_user_notification(
     notif_type: str = "update",
     extra: Optional[Dict[str, Any]] = None,
 ) -> None:
+    # Centralized notification format to keep payloads consistent.
     current_db = get_db()
     if current_db is None or not uid:
         return
@@ -137,6 +148,7 @@ def create_user_notification(
 
 
 def require_admin(uid: str) -> None:
+    # Simple guard used by all admin routes.
     if not uid:
         raise HTTPException(status_code=403, detail="Admin UID required")
 
