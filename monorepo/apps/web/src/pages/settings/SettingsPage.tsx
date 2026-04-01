@@ -1,3 +1,6 @@
+// Page module: SettingsPage
+// Purpose: Handles this page's UI state and user actions.
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -396,3 +399,4 @@ export default function SettingsPage() {
     </DashboardLayout>
   );
 }
+

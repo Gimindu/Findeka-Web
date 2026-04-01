@@ -1,3 +1,6 @@
+// Page module: NotificationPage
+// Purpose: Handles this page's UI state and user actions.
+
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 import { Button } from "@/components/ui/button";
@@ -407,3 +410,4 @@ export default function NotificationPage() {
     </DashboardLayout>
   );
 }
+

@@ -1,3 +1,6 @@
+// Page module: AdminDashboardPage
+// Purpose: Handles this page's UI state and user actions.
+
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -72,3 +75,4 @@ export default function AdminDashboardPage() {
     </AdminLayout>
   );
 }
+

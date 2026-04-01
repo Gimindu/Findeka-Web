@@ -1,3 +1,6 @@
+// Styles module: colors
+// Purpose: Shared color/style definitions for consistent UI.
+
 const colorClasses = {
   primary: 'bg-[#DD6B20] text-white',
   primaryHover: 'hover:bg-[#C45D1C]',
@@ -13,3 +16,5 @@ const colorClasses = {
 };
 
 export default colorClasses;
+
+

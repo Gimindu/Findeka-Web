@@ -1,3 +1,6 @@
+// Component module: card
+// Purpose: Shared UI/business logic used across multiple pages.
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { motion, HTMLMotionProps } from "framer-motion"
@@ -80,3 +83,5 @@ const CardFooter = React.forwardRef<
 CardFooter.displayName = "CardFooter"
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+
+

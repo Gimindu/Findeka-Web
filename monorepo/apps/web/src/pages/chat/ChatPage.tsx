@@ -1,3 +1,6 @@
+// Page module: ChatPage
+// Purpose: Handles this page's UI state and user actions.
+
 import { useState } from "react";
 import { Send, User, MoreVertical, Search, Phone, Video } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -252,3 +255,4 @@ export default function ChatPage() {
     </DashboardLayout>
   );
 }
+

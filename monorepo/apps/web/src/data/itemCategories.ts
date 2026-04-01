@@ -1,3 +1,6 @@
+// Data module: itemCategories
+// Purpose: Static data/constants used by the UI.
+
 export const ITEM_CATEGORIES: Record<string, string[]> = {
   Accessories: [
     "Jewelry",
@@ -127,3 +130,5 @@ export const ITEM_CATEGORIES: Record<string, string[]> = {
   ],
   Other: ["Miscellaneous", "Unknown", "Other"],
 };
+
+

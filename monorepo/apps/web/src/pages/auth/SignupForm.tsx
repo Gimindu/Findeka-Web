@@ -1,3 +1,6 @@
+// Page module: SignupForm
+// Purpose: Handles this page's UI state and user actions.
+
 import { useState } from "react";
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -180,3 +183,4 @@ export default function SignupForm() {
     </form>
   );
 }
+

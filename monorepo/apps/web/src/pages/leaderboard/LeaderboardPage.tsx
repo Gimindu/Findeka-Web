@@ -1,3 +1,6 @@
+// Page module: LeaderboardPage
+// Purpose: Handles this page's UI state and user actions.
+
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   Card,
@@ -217,3 +220,4 @@ export default function LeaderboardPage() {
     </DashboardLayout>
   );
 }
+

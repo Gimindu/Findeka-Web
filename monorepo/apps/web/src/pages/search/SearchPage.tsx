@@ -1,3 +1,6 @@
+// Page module: SearchPage
+// Purpose: Handles this page's UI state and user actions.
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Search, Filter, MapPin, Calendar, Clock } from "lucide-react";
@@ -337,3 +340,4 @@ export default function SearchPage() {
     </DashboardLayout>
   );
 }
+

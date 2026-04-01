@@ -1,3 +1,6 @@
+// Page module: ReportItemPage
+// Purpose: Handles this page's UI state and user actions.
+
 import React, { useEffect, useState, useRef } from "react";
 import {
   MapPin,
@@ -876,3 +879,4 @@ export default function ReportItemPage() {
     </DashboardLayout>
   );
 }
+

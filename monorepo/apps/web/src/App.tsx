@@ -1,3 +1,6 @@
+// Entry module: App
+// Purpose: Main app routes and top-level providers/layout.
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoadingPage from "./lib/startingPage/loadingPage";
 // import LostFoundAI from './lib/copy/Fullcode';
@@ -56,3 +59,5 @@ function App() {
 }
 
 export default App;
+
+

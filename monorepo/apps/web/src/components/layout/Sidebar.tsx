@@ -1,3 +1,6 @@
+// Component module: Sidebar
+// Purpose: Shared UI/business logic used across multiple pages.
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -127,3 +130,5 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     </aside>
   );
 }
+
+

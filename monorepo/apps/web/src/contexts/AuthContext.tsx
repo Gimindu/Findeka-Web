@@ -1,3 +1,6 @@
+// Context module: AuthContext
+// Purpose: App-wide state and auth/session handling.
+
 import {
   createContext,
   useContext,
@@ -102,3 +105,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
+

@@ -1,3 +1,6 @@
+// Component module: DashboardLayout
+// Purpose: Shared UI/business logic used across multiple pages.
+
 import { ReactNode, useEffect, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Bell, Menu, User } from "lucide-react";
@@ -128,3 +131,5 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     </div>
   );
 }
+
+

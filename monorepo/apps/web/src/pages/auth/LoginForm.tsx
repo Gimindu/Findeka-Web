@@ -1,3 +1,6 @@
+// Page module: LoginForm
+// Purpose: Handles this page's UI state and user actions.
+
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -131,3 +134,4 @@ export default function LoginForm() {
     </form>
   );
 }
+

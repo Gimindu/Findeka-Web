@@ -1,3 +1,6 @@
+// Utility module: firebase
+// Purpose: Shared UI/business logic used across multiple pages.
+
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
@@ -22,3 +25,5 @@ if (typeof window !== "undefined") {
 }
 
 export { app, auth, analytics };
+
+

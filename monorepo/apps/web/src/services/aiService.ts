@@ -1,3 +1,6 @@
+// Service module: aiService
+// Purpose: API calls and server communication helpers.
+
 const API_URL = "http://localhost:8001";
 
 const CACHE_TTL = {
@@ -500,4 +503,6 @@ export const clearUserNotifications = async (uid: string) => {
     userNotificationsCache.delete(uid);
     return result;
 };
+
+
 

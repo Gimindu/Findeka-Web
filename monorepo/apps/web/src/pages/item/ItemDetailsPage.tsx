@@ -1,3 +1,6 @@
+// Page module: ItemDetailsPage
+// Purpose: Handles this page's UI state and user actions.
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -314,3 +317,4 @@ export default function ItemDetailsPage() {
     </DashboardLayout>
   );
 }
+

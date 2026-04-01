@@ -1,3 +1,6 @@
+// Component module: native-select
+// Purpose: Shared UI/business logic used across multiple pages.
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { ChevronDown } from "lucide-react";
@@ -34,3 +37,5 @@ const NativeSelect = React.forwardRef<HTMLSelectElement, NativeSelectProps>(
 NativeSelect.displayName = "NativeSelect"
 
 export { NativeSelect }
+
+

@@ -1,3 +1,6 @@
+// Utility module: loadingPage
+// Purpose: Shared UI/business logic used across multiple pages.
+
 import { Link } from 'react-router-dom'; 
 import { Search, Shield, Zap, Globe, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -97,3 +100,5 @@ export default function LoadingPage() {
     </div>
   );
 }
+
+

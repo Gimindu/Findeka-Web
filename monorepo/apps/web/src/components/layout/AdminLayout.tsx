@@ -1,3 +1,6 @@
+// Component module: AdminLayout
+// Purpose: Shared UI/business logic used across multiple pages.
+
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -143,3 +146,5 @@ export default function AdminLayout({
     </div>
   );
 }
+
+

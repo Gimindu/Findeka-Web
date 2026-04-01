@@ -1,3 +1,6 @@
+// Page module: AdminPostReviewPage
+// Purpose: Handles this page's UI state and user actions.
+
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { CheckCircle2, XCircle } from "lucide-react";
@@ -224,3 +227,4 @@ export default function AdminPostReviewPage() {
     </AdminLayout>
   );
 }
+

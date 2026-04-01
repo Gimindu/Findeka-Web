@@ -1,3 +1,6 @@
+// Page module: AdminRecyclingBinPage
+// Purpose: Handles this page's UI state and user actions.
+
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { RotateCcw, Trash2 } from "lucide-react";
@@ -181,3 +184,4 @@ export default function AdminRecyclingBinPage() {
     </AdminLayout>
   );
 }
+

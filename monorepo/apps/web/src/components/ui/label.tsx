@@ -1,3 +1,6 @@
+// Component module: label
+// Purpose: Shared UI/business logic used across multiple pages.
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
@@ -17,3 +20,5 @@ const Label = React.forwardRef<
 Label.displayName = "Label"
 
 export { Label }
+
+

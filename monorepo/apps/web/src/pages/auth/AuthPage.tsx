@@ -1,3 +1,6 @@
+// Page module: AuthPage
+// Purpose: Handles this page's UI state and user actions.
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
@@ -228,3 +231,4 @@ export default function AuthPage() {
     </div>
   );
 }
+
