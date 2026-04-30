@@ -2,6 +2,7 @@
 
 import os
 import sys
+import importlib
 
 # Lazy / Safe Imports for heavy ML libraries
 try:
@@ -22,8 +23,10 @@ except ImportError:
     SentenceTransformer = None
 
 try:
-    from tensorflow.keras.applications import MobileNetV2
-    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+    keras_apps = importlib.import_module("tensorflow.keras.applications")
+    mobilenet_v2_module = importlib.import_module("tensorflow.keras.applications.mobilenet_v2")
+    MobileNetV2 = keras_apps.MobileNetV2
+    preprocess_input = mobilenet_v2_module.preprocess_input
 except ImportError:
     MobileNetV2 = None
     preprocess_input = None

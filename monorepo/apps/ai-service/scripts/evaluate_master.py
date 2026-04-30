@@ -1007,10 +1007,11 @@ class ModelEvaluationPipeline:
         print(bar)
 
         # Write Robustness Summary Table as the main comparison file
-        import os
-        comparison_path = os.path.join(
-            os.path.dirname(__file__),
-            "evaluation", "evaluation_results", "experiment_comparison_with_images.txt"
+        comparison_path = (
+            Path(__file__).resolve().parent.parent
+            / "evaluation"
+            / "evaluation_results"
+            / "experiment_comparison_with_images.txt"
         )
         summary_lines = [
             "=" * 120 + "\n",

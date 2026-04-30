@@ -12,7 +12,7 @@ from pathlib import Path
 # Base paths
 BASE_PATH = Path(__file__).parent.parent  # Go up one level from evaluation/
 STORAGE_PATH = BASE_PATH / "storage"
-TEST_IMAGES_PATH = BASE_PATH / "test_images"
+TEST_IMAGES_PATH = BASE_PATH / "tests" / "images"
 EVALUATION_RESULTS_PATH = BASE_PATH / "evaluations"  # Changed to evaluations folder
 
 # Ensure directories exist
