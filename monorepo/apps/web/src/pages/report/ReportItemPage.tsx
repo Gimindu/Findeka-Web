@@ -172,7 +172,6 @@ export default function ReportItemPage() {
         setMatches(result.matches);
         setMatchConfirmed(false);
         setShowMatchesModal(true);
-        resetFormFields();
       } else {
         // No matches, direct submit
         await performSubmit(formData);
