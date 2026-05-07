@@ -126,12 +126,30 @@ export default function ReportItemPage() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
+    if (e.target.files && e.target.files.length > 0) {
       setPostData((prev) => ({
         ...prev,
-        photos: [...prev.photos, ...newFiles].slice(0, 5), // Limit to 5
+        photos: [e.target.files![0]], // Limit to exactly 1 image
       }));
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        setPostData((prev) => ({
+          ...prev,
+          photos: [file],
+        }));
+      }
     }
   };
 
@@ -462,6 +480,8 @@ export default function ReportItemPage() {
               <div className="space-y-4">
                 <Label>Upload Photos</Label>
                 <div
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
                   className="border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[#DD6B20] hover:bg-orange-50 transition-all group"
                 >
@@ -469,16 +489,15 @@ export default function ReportItemPage() {
                     <UploadCloud className="h-6 w-6 text-slate-400 group-hover:text-[#DD6B20]" />
                   </div>
                   <p className="font-medium text-slate-700">
-                    Click to upload photos
+                    Click or drag and drop to upload photo
                   </p>
                   <p className="text-sm text-slate-500">
-                    SVG, PNG, JPG or GIF (max. 5 items)
+                    SVG, PNG, JPG or GIF (max. 1 item)
                   </p>
                   <input
                     ref={fileInputRef}
                     type="file"
                     hidden
-                    multiple
                     accept="image/*"
                     onChange={handleFileChange}
                   />

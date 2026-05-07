@@ -13,6 +13,10 @@ from keras.applications.mobilenet_v2 import preprocess_input
 from models_loader import model_manager
 from utils import run_ocr, check_color_match, get_dominant_colors, calculate_location_score, get_time_decay, get_image_quality
 
+def scale_sim(sim, threshold=0.1):
+    """Shifts and scales similarity so that anything below threshold is 0.0"""
+    return max(0.0, (sim - threshold) / (1.0 - threshold))
+
 def extract_features(item: dict, img_path: str):
     """
     Extracts multimodal features from an item dict and its image.
@@ -108,43 +112,85 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
     # Similarity Calculations
     s_tt = 0.0
     if query_feats['bert'] is not None and target_feats['bert'] is not None:
-        s_tt = float(cosine_similarity([query_feats['bert']], [target_feats['bert']])[0][0])
+        s_tt = scale_sim(float(cosine_similarity([query_feats['bert']], [target_feats['bert']])[0][0]), 0.1)
     
     s_ii = 0.0
     if query_feats['clip_img'] is not None and target_feats['clip_img'] is not None:
-        clip_sim = float(cosine_similarity([query_feats['clip_img']], [target_feats['clip_img']])[0][0])
-        mob_sim = 0.0
+        clip_sim = scale_sim(float(cosine_similarity([query_feats['clip_img']], [target_feats['clip_img']])[0][0]), 0.1)
         if query_feats['mob'] is not None and target_feats['mob'] is not None:
-             mob_sim = float(cosine_similarity([query_feats['mob']], [target_feats['mob']])[0][0])
-        
-        s_ii = (clip_sim * 0.7) + (mob_sim * 0.3)
+             mob_sim = scale_sim(float(cosine_similarity([query_feats['mob']], [target_feats['mob']])[0][0]), 0.1)
+             s_ii = (clip_sim * 0.7) + (mob_sim * 0.3)
+        else:
+             s_ii = clip_sim
+    elif query_feats['mob'] is not None and target_feats['mob'] is not None:
+        mob_sim = scale_sim(float(cosine_similarity([query_feats['mob']], [target_feats['mob']])[0][0]), 0.1)
+        s_ii = mob_sim
 
     s_ti = 0.0
     # CLIP Text->Image
     if query_feats['clip_txt'] is not None and target_feats['clip_img'] is not None:
-         s_ti = float(cosine_similarity([query_feats['clip_txt']], [target_feats['clip_img']])[0][0])
+         s_ti = scale_sim(float(cosine_similarity([query_feats['clip_txt']], [target_feats['clip_img']])[0][0]), 0.1)
 
     s_it = 0.0
     # CLIP Image->Text
     if query_feats['clip_img'] is not None and target_feats['clip_txt'] is not None:
-         s_it = float(cosine_similarity([query_feats['clip_img']], [target_feats['clip_txt']])[0][0])
+         s_it = scale_sim(float(cosine_similarity([query_feats['clip_img']], [target_feats['clip_txt']])[0][0]), 0.1)
 
     # Fuzzy Text
-    name_fuzzy = fuzz.ratio(query_item.get('name','').lower(), target_item.get('name', '').lower()) / 100.0
-    desc_fuzzy = fuzz.partial_ratio(query_item.get('description','').lower(), target_item.get('description', '').lower()) / 100.0
+    q_name_str = query_item.get('name','').lower()
+    t_name_str = target_item.get('name', '').lower()
+    name_fuzzy = max(fuzz.ratio(q_name_str, t_name_str), fuzz.token_set_ratio(q_name_str, t_name_str)) / 100.0
+    desc_fuzzy = fuzz.token_set_ratio(query_item.get('description','').lower(), target_item.get('description', '').lower()) / 100.0
     
+    # Keyword & Brand Clash Detector
+    clash_groups = [
+        ["backpack", "handbag", "duffle", "purse", "wallet", "suitcase", "briefcase", "tote"],
+        ["adidas", "nike", "puma", "gucci", "louis vuitton", "prada", "chanel", "hermes"],
+        ["apple", "samsung", "google", "sony", "dell", "hp", "lenovo"],
+        ["watch", "ring", "necklace", "earring", "bracelet"]
+    ]
+    q_text = f"{query_item.get('name', '')} {query_item.get('description', '')}".lower()
+    t_text = f"{target_item.get('name', '')} {target_item.get('description', '')}".lower()
+    
+    clash_penalty = 1.0
+    for group in clash_groups:
+        q_matches = set([w for w in group if w in q_text])
+        t_matches = set([w for w in group if w in t_text])
+        if q_matches and t_matches and not q_matches.intersection(t_matches):
+            clash_penalty *= 0.5 # Halve the text score for each distinct clash
+
     # Check if BERT loaded
     if query_feats['bert'] is not None:
          # Reduced name weight from 0.2 to 0.1, increased desc to 0.2
-         text_logic_score = (s_tt * 0.7) + (name_fuzzy * 0.1) + (desc_fuzzy * 0.2)
+         text_logic_score = ((s_tt * 0.7) + (name_fuzzy * 0.1) + (desc_fuzzy * 0.2)) * clash_penalty
     else:
          # Fallback: Rely 100% on Fuzzy Match if BERT missing
          print("⚠️ BERT missing, using fuzzy fallback")
          # Reduced name weight from 0.6 to 0.2, increased desc to 0.8
-         text_logic_score = (name_fuzzy * 0.2) + (desc_fuzzy * 0.8)
+         text_logic_score = ((name_fuzzy * 0.2) + (desc_fuzzy * 0.8)) * clash_penalty
+
+    # Visual Score (Context-Aware)
+    has_q_clip = query_feats['clip_img'] is not None
+    has_t_clip = target_feats['clip_img'] is not None
+    has_q_mob = query_feats['mob'] is not None
+    has_t_mob = target_feats['mob'] is not None
+    
+    if has_q_clip and has_t_clip:
+        visual_score = (s_ii * 0.7) + (s_ti * 0.15) + (s_it * 0.15)
+    elif has_q_mob and has_t_mob:
+        visual_score = s_ii
+    elif not has_q_clip and has_t_clip:
+        visual_score = s_ti
+    elif has_q_clip and not has_t_clip:
+        visual_score = s_it
+    else:
+        visual_score = 0.0
+        # CRITICAL FIX: If visual extraction completely failed (models missing), 
+        # do not penalize the base_score with a 0.0 visual_score.
+        w_img, w_txt = (0.0, 1.0)
 
     # Base Score
-    base_score = (max(s_ii, s_ti, s_it) * w_img + text_logic_score * w_txt)
+    base_score = (visual_score * w_img + text_logic_score * w_txt)
 
     # Feature Scores
     col_score = 0.0
