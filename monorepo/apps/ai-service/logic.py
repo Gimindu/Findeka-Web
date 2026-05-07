@@ -97,14 +97,13 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
     q_sub = query_item.get('subcategory', '').lower()
     t_sub = target_item.get('subcategory', '').lower()
     
-    # Improved Subcategory Logic: Fuzzy match for plurals (Watch vs Watches) 
-    # and less harsh penalty (0.5 instead of 0.1)
+    # Improved Subcategory Logic: Fuzzy match for plurals (Watch vs Watches)
     if q_sub == t_sub:
-        multiplier = 1.5
+        multiplier = 1.0
     elif fuzz.ratio(q_sub, t_sub) > 80:
-        multiplier = 1.2
+        multiplier = 0.9
     else:
-        multiplier = 0.5
+        multiplier = 0.3
 
     # Similarity Calculations
     s_tt = 0.0
@@ -145,7 +144,7 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
          text_logic_score = (name_fuzzy * 0.2) + (desc_fuzzy * 0.8)
 
     # Base Score
-    base_score = (max(s_ii, s_ti, s_it) * w_img + text_logic_score * w_txt) * multiplier
+    base_score = (max(s_ii, s_ti, s_it) * w_img + text_logic_score * w_txt)
 
     # Feature Scores
     col_score = 0.0
@@ -175,6 +174,6 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
        (target_feats['ocr_txt'] and q_name in target_feats['ocr_txt']):
         ocr_boost = 0.2
 
-    final_score = (base_score * 0.5) + (loc_score * 0.2) + (col_score * 0.2) + (time_score * 0.1) + ocr_boost
+    final_score = ((base_score * 0.85) + (loc_score * 0.05) + (col_score * 0.05) + (time_score * 0.05) + ocr_boost) * multiplier
     
     return min(1.0, final_score)
