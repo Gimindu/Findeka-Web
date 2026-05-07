@@ -12,12 +12,15 @@ import {
   Phone,
   AlertTriangle,
   ShieldCheck,
+  Share2,
+  X,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { fetchAllItems, ItemMatch, reportItem } from "@/services/aiService";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { PosterGenerator } from "@/components/item/PosterGenerator";
 
 export default function ItemDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +34,7 @@ export default function ItemDetailsPage() {
   const [isReporting, setIsReporting] = useState(false);
   const [isReportFormOpen, setIsReportFormOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
+  const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
 
   const submitReport = async () => {
     if (!item?._id) return;
@@ -97,6 +101,23 @@ export default function ItemDetailsPage() {
         >
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
+
+        {/* Poster Modal */}
+        {isPosterModalOpen && item && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative">
+              <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                <h3 className="font-bold text-lg text-slate-900">Share as Poster</h3>
+                <Button variant="ghost" size="icon" onClick={() => setIsPosterModalOpen(false)}>
+                  <X className="w-5 h-5 text-slate-500" />
+                </Button>
+              </div>
+              <div className="p-4 bg-slate-50 max-h-[80vh] overflow-y-auto">
+                <PosterGenerator item={item} itemUrl={window.location.href} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center items-center py-32 text-slate-500">
@@ -293,7 +314,15 @@ export default function ItemDetailsPage() {
                   )}
                   <Button
                     variant="outline"
-                    className="w-full h-12 text-slate-600 border-slate-200 hover:bg-slate-50"
+                    className="w-full h-12 text-slate-700 border-slate-200 hover:bg-slate-50 shadow-sm"
+                    onClick={() => setIsPosterModalOpen(true)}
+                  >
+                    <Share2 className="w-5 h-5 mr-2 text-indigo-500" />
+                    Share as Poster
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full h-10 text-slate-500 hover:bg-slate-100"
                     onClick={() => {
                       if (!user) {
                         navigate("/auth");

@@ -125,6 +125,11 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
     if query_feats['clip_txt'] is not None and target_feats['clip_img'] is not None:
          s_ti = float(cosine_similarity([query_feats['clip_txt']], [target_feats['clip_img']])[0][0])
 
+    s_it = 0.0
+    # CLIP Image->Text
+    if query_feats['clip_img'] is not None and target_feats['clip_txt'] is not None:
+         s_it = float(cosine_similarity([query_feats['clip_img']], [target_feats['clip_txt']])[0][0])
+
     # Fuzzy Text
     name_fuzzy = fuzz.ratio(query_item.get('name','').lower(), target_item.get('name', '').lower()) / 100.0
     desc_fuzzy = fuzz.partial_ratio(query_item.get('description','').lower(), target_item.get('description', '').lower()) / 100.0
@@ -140,7 +145,7 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
          text_logic_score = (name_fuzzy * 0.2) + (desc_fuzzy * 0.8)
 
     # Base Score
-    base_score = (max(s_ii, s_ti) * w_img + text_logic_score * w_txt) * multiplier
+    base_score = (max(s_ii, s_ti, s_it) * w_img + text_logic_score * w_txt) * multiplier
 
     # Feature Scores
     col_score = 0.0
