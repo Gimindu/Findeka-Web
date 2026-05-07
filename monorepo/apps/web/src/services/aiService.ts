@@ -24,6 +24,17 @@ export interface ItemMatch {
     image_path: string;
     image_url?: string;
     final_score: number;
+    score_breakdown?: {
+        base_score: number;
+        visual_score: number;
+        text_logic_score: number;
+        location_score: number;
+        color_score: number;
+        time_score: number;
+        ocr_boost: number;
+        multiplier: number;
+        clash_penalty: number;
+    };
     // Add other fields from mongo doc
     [key: string]: any;
 }

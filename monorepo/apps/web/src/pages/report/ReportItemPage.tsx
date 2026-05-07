@@ -11,6 +11,8 @@ import {
   ArrowRight,
   CheckCircle2,
   Phone,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
@@ -84,6 +86,7 @@ export default function ReportItemPage() {
   const [requesterItemNameForMatch, setRequesterItemNameForMatch] =
     useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
 
   const [postData, setPostData] = useState({
     title: "",
@@ -729,6 +732,70 @@ export default function ReportItemPage() {
                       {selectedMatch.description}
                     </p>
                   </div>
+
+                  {selectedMatch.score_breakdown && (
+                    <div className="mt-4 border border-slate-200 rounded-xl overflow-hidden">
+                      <div 
+                        className="bg-slate-50 px-4 py-3 cursor-pointer flex justify-between items-center hover:bg-slate-100 transition-colors"
+                        onClick={() => setShowScoreBreakdown(!showScoreBreakdown)}
+                      >
+                        <h4 className="font-semibold text-slate-900 flex items-center gap-2">
+                           Why this score?
+                        </h4>
+                        {showScoreBreakdown ? <ChevronUp className="h-5 w-5 text-slate-500" /> : <ChevronDown className="h-5 w-5 text-slate-500" />}
+                      </div>
+                      <AnimatePresence>
+                        {showScoreBreakdown && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="p-4 space-y-3 text-sm border-t border-slate-200">
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-600">🧠 AI Core Similarity</span>
+                                <span className="font-medium text-slate-900">{(selectedMatch.score_breakdown.base_score * 85).toFixed(1)} / 85 pts</span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs pl-6 text-slate-500">
+                                <span>(Image: {Math.round(selectedMatch.score_breakdown.visual_score * 100)}%, Text: {Math.round(selectedMatch.score_breakdown.text_logic_score * 100)}%)</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-600">📍 Location Match</span>
+                                <span className="font-medium text-slate-900">{(selectedMatch.score_breakdown.location_score * 5).toFixed(1)} / 5 pts</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-600">🎨 Color Match</span>
+                                <span className="font-medium text-slate-900">{(selectedMatch.score_breakdown.color_score * 5).toFixed(1)} / 5 pts</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-600">📅 Date Proximity</span>
+                                <span className="font-medium text-slate-900">{(selectedMatch.score_breakdown.time_score * 5).toFixed(1)} / 5 pts</span>
+                              </div>
+                              {selectedMatch.score_breakdown.ocr_boost > 0 && (
+                                <div className="flex justify-between items-center text-emerald-600">
+                                  <span>🔍 Name Detected in Image</span>
+                                  <span className="font-medium">+20 pts bonus!</span>
+                                </div>
+                              )}
+                              <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                                <span className="text-slate-600">🏷️ Subcategory Filter</span>
+                                <span className={`font-medium ${selectedMatch.score_breakdown.multiplier < 1.0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                                  {selectedMatch.score_breakdown.multiplier < 1.0 ? `Penalty (${selectedMatch.score_breakdown.multiplier}x)` : 'Passed (1.0x)'}
+                                </span>
+                              </div>
+                              {selectedMatch.score_breakdown.clash_penalty < 1.0 && (
+                                <div className="flex justify-between items-center text-red-500">
+                                  <span>⚠️ Keyword Clash Detected</span>
+                                  <span className="font-medium">Text Score Penalty ({selectedMatch.score_breakdown.clash_penalty}x)</span>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
 
                   {matchConfirmed && (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">

@@ -86,12 +86,13 @@ async def search_items(
         try:
             t_path = t.get("image_path")
             t_feats = extract_features(t, t_path)
-            score = calculate_match_score(query_item, query_img_path, q_feats, t, t_path, t_feats)
+            score, breakdown = calculate_match_score(query_item, query_img_path, q_feats, t, t_path, t_feats)
 
             # Tunable threshold. Raise for precision, lower for recall.
             if score > 0.4:
                 t["_id"] = str(t["_id"])
                 t["final_score"] = score
+                t["score_breakdown"] = breakdown
                 t["image_url"] = get_image_url(t.get("image_path"))
                 t["phone"] = get_user_phone(t.get("uid"))
                 matches.append(t)

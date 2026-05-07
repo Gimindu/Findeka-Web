@@ -145,8 +145,11 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
     # Keyword & Brand Clash Detector
     clash_groups = [
         ["backpack", "handbag", "duffle", "purse", "wallet", "suitcase", "briefcase", "tote"],
-        ["adidas", "nike", "puma", "gucci", "louis vuitton", "prada", "chanel", "hermes"],
-        ["apple", "samsung", "google", "sony", "dell", "hp", "lenovo"],
+        [
+            "adidas", "nike", "puma", "gucci", "louis vuitton", "prada", "chanel", "hermes",
+            "apple", "samsung", "google", "sony", "dell", "hp", "lenovo",
+            "rolex", "casio", "seiko", "fossil", "poshi", "citizen", "omega", "tag heuer", "garmin", "fitbit"
+        ],
         ["watch", "ring", "necklace", "earring", "bracelet"]
     ]
     q_text = f"{query_item.get('name', '')} {query_item.get('description', '')}".lower()
@@ -222,4 +225,16 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
 
     final_score = ((base_score * 0.85) + (loc_score * 0.05) + (col_score * 0.05) + (time_score * 0.05) + ocr_boost) * multiplier
     
-    return min(1.0, final_score)
+    breakdown = {
+        "base_score": float(base_score),
+        "visual_score": float(visual_score),
+        "text_logic_score": float(text_logic_score),
+        "location_score": float(loc_score),
+        "color_score": float(col_score),
+        "time_score": float(time_score),
+        "ocr_boost": float(ocr_boost),
+        "multiplier": float(multiplier),
+        "clash_penalty": float(clash_penalty)
+    }
+
+    return min(1.0, final_score), breakdown
