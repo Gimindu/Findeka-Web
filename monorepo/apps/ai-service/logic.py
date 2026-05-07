@@ -17,6 +17,36 @@ def scale_sim(sim, threshold=0.1):
     """Shifts and scales similarity so that anything below threshold is 0.0"""
     return max(0.0, (sim - threshold) / (1.0 - threshold))
 
+def get_entities(text):
+    """Uses SpaCy to extract ORG and PRODUCT entities from text."""
+    if not model_manager.nlp or not text:
+        return []
+    doc = model_manager.nlp(text)
+    return [ent.text.lower() for ent in doc.ents if ent.label_ in ["ORG", "PRODUCT"]]
+
+COLOR_MAP = {
+    "red": (255, 0, 0), "green": (0, 128, 0), "blue": (0, 0, 255),
+    "navy": (0, 0, 128), "dark blue": (0, 0, 139), "light blue": (173, 216, 230),
+    "black": (0, 0, 0), "white": (255, 255, 255), "gray": (128, 128, 128),
+    "grey": (128, 128, 128), "silver": (192, 192, 192), "gold": (255, 215, 0),
+    "yellow": (255, 255, 0), "orange": (255, 165, 0), "purple": (128, 0, 128),
+    "pink": (255, 192, 203), "brown": (165, 42, 42), "beige": (245, 245, 220),
+    "tan": (210, 180, 140)
+}
+
+def get_rgb(color_str):
+    if not color_str:
+        return None
+    for name, rgb in COLOR_MAP.items():
+        if name in color_str.lower():
+            return rgb
+    return None
+
+def color_distance(c1, c2):
+    # Max Euclidean distance is sqrt(255^2 * 3) ~ 441.67
+    dist = ((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 + (c1[2]-c2[2])**2) ** 0.5
+    return max(0.0, 1.0 - (dist / 441.67))
+
 def extract_features(item: dict, img_path: str):
     """
     Extracts multimodal features from an item dict and its image.
@@ -142,20 +172,25 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
     name_fuzzy = max(fuzz.ratio(q_name_str, t_name_str), fuzz.token_set_ratio(q_name_str, t_name_str)) / 100.0
     desc_fuzzy = fuzz.token_set_ratio(query_item.get('description','').lower(), target_item.get('description', '').lower()) / 100.0
     
-    # Keyword & Brand Clash Detector
-    clash_groups = [
-        ["backpack", "handbag", "duffle", "purse", "wallet", "suitcase", "briefcase", "tote"],
-        [
-            "adidas", "nike", "puma", "gucci", "louis vuitton", "prada", "chanel", "hermes",
-            "apple", "samsung", "google", "sony", "dell", "hp", "lenovo",
-            "rolex", "casio", "seiko", "fossil", "poshi", "citizen", "omega", "tag heuer", "garmin", "fitbit"
-        ],
-        ["watch", "ring", "necklace", "earring", "bracelet"]
-    ]
+    # Keyword & Brand Clash Detector (NLP + Hardcoded Fallbacks)
     q_text = f"{query_item.get('name', '')} {query_item.get('description', '')}".lower()
     t_text = f"{target_item.get('name', '')} {target_item.get('description', '')}".lower()
     
     clash_penalty = 1.0
+    
+    # 1. NLP Dynamic Entity Clash (Brands & Products)
+    q_ents = set(get_entities(q_text))
+    t_ents = set(get_entities(t_text))
+    
+    if q_ents and t_ents and not q_ents.intersection(t_ents):
+        clash_penalty *= 0.5
+        
+    # 2. Hardcoded Item Type Fallbacks
+    clash_groups = [
+        ["backpack", "handbag", "duffle", "purse", "wallet", "suitcase", "briefcase", "tote"],
+        ["watch", "ring", "necklace", "earring", "bracelet"]
+    ]
+    
     for group in clash_groups:
         q_matches = set([w for w in group if w in q_text])
         t_matches = set([w for w in group if w in t_text])
@@ -197,20 +232,22 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
 
     # Feature Scores
     col_score = 0.0
-    if target_img_path:
-        # Compute colors on the fly if not cached? 
-        # Ideally target feats should contain colors? Or we recompute. 
-        # For performance, we should probably assume target_feats has it. 
-        # But for now, we'll recompute as per user script logic which passed t['image_path'] to get_dominant_colors
-        
-        # User script: check_color_match(query_item['color'], get_dominant_colors(t.get('image_path')))
-        # This is expensive to do for every target if not cached. 
-        # But we will follow the script for now.
+    q_color_str = query_item.get('color', '')
+    t_color_str = target_item.get('color', '')
+    
+    q_rgb = get_rgb(q_color_str)
+    t_rgb = get_rgb(t_color_str)
+    
+    if q_rgb and t_rgb:
+        # 1. RGB 3D Geometric Distance
+        col_score = color_distance(q_rgb, t_rgb)
+    elif target_img_path:
+        # 2. Extract colors from image
         t_colors = get_dominant_colors(target_img_path)
-        col_score = check_color_match(query_item.get('color', ''), t_colors)
+        col_score = check_color_match(q_color_str, t_colors)
     else:
-        # Fallback to text match
-        if query_item.get('color','').lower() in target_item.get('color','').lower():
+        # 3. Fallback to text match
+        if q_color_str and q_color_str.lower() in t_color_str.lower():
             col_score = 1.0
 
     loc_score = calculate_location_score(query_item.get('location', ''), target_item.get('location', ''))
