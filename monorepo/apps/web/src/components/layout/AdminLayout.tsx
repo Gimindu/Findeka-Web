@@ -56,7 +56,7 @@ export default function AdminLayout({
       >
         <div className="flex h-full flex-col px-4 py-5">
           <div className="mb-8 flex items-center justify-between pl-2">
-            <div className="flex items-center">
+            <Link to="/dashboard" className="flex items-center">
               <div className="mr-3 rounded-lg bg-[#DD6B20] p-2 shadow-lg shadow-orange-500/25">
                 <Search className="h-6 w-6 text-white" />
               </div>
@@ -64,7 +64,7 @@ export default function AdminLayout({
                 <p className="text-xl font-bold leading-none">Findeka</p>
                 <p className="text-xs text-slate-500">Administration</p>
               </div>
-            </div>
+            </Link>
             <button
               type="button"
               className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 md:hidden"

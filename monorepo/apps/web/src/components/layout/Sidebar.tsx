@@ -55,14 +55,14 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     >
       <div className="flex h-full flex-col px-3 py-4">
         <div className="mb-10 flex items-center justify-between pl-3">
-          <div className="flex items-center">
+          <Link to="/dashboard" className="flex items-center" onClick={() => onClose?.()}>
             <div className="flex bg-[#DD6B20] p-2 rounded-lg mr-3 shadow-lg shadow-orange-500/20">
               <Search className="h-6 w-6 text-white" />
             </div>
-            <span className="self-center text-xl font-bold whitespace-nowrap">
+            <span className="self-center text-xl font-bold whitespace-nowrap text-slate-900">
               Findeka
             </span>
-          </div>
+          </Link>
           <button
             type="button"
             onClick={() => onClose?.()}
