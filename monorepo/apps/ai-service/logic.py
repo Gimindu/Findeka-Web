@@ -192,7 +192,9 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
     # 2. Hardcoded Item Type Fallbacks
     clash_groups = [
         ["backpack", "handbag", "duffle", "purse", "wallet", "suitcase", "briefcase", "tote"],
-        ["watch", "ring", "necklace", "earring", "bracelet"]
+        ["watch", "ring", "necklace", "earring", "bracelet"],
+        ["apple", "samsung", "google", "huawei", "oneplus", "sony", "nokia", "motorola"],
+        ["nike", "adidas", "puma", "reebok", "vans", "converse", "gucci", "prada", "louis vuitton", "chanel", "hermes", "balenciaga", "rolex", "casio"]
     ]
     
     for group in clash_groups:
