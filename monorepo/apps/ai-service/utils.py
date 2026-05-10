@@ -7,10 +7,7 @@ from datetime import datetime
 from sklearn.cluster import KMeans
 import easyocr
 
-# Initialize global EasyOCR reader to avoid reloading it constantly? 
-# Or keep it local. The original script loaded it globally.
-# We'll rely on the ModelManager to handle heavy globals, but simple utils can be here.
-
+# use kmeans to get dominant colors
 def get_dominant_colors(img_path, k=3):
     """EXTRACTOR: Finds top 3 colors (Palette Matching)"""
     try:

@@ -89,7 +89,7 @@ async def search_items(
             score, breakdown = calculate_match_score(query_item, query_img_path, q_feats, t, t_path, t_feats)
 
             # Tunable threshold. Raise for precision, lower for recall.
-            if score > 0.4:
+            if score > 0.5:
                 t["_id"] = str(t["_id"])
                 t["final_score"] = score
                 t["score_breakdown"] = breakdown

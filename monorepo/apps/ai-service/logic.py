@@ -173,14 +173,18 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
     desc_fuzzy = fuzz.token_set_ratio(query_item.get('description','').lower(), target_item.get('description', '').lower()) / 100.0
     
     # Keyword & Brand Clash Detector (NLP + Hardcoded Fallbacks)
-    q_text = f"{query_item.get('name', '')} {query_item.get('description', '')}".lower()
-    t_text = f"{target_item.get('name', '')} {target_item.get('description', '')}".lower()
+    q_text_raw = f"{query_item.get('name', '')} {query_item.get('description', '')}"
+    t_text_raw = f"{target_item.get('name', '')} {target_item.get('description', '')}"
+    
+    q_text = q_text_raw.lower()
+    t_text = t_text_raw.lower()
     
     clash_penalty = 1.0
     
     # 1. NLP Dynamic Entity Clash (Brands & Products)
-    q_ents = set(get_entities(q_text))
-    t_ents = set(get_entities(t_text))
+    # CRITICAL: Pass raw, case-preserved text to SpaCy. Lowercased text breaks NER.
+    q_ents = set(get_entities(q_text_raw))
+    t_ents = set(get_entities(t_text_raw))
     
     if q_ents and t_ents and not q_ents.intersection(t_ents):
         clash_penalty *= 0.5
@@ -200,12 +204,12 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
     # Check if BERT loaded
     if query_feats['bert'] is not None:
          # Reduced name weight from 0.2 to 0.1, increased desc to 0.2
-         text_logic_score = ((s_tt * 0.7) + (name_fuzzy * 0.1) + (desc_fuzzy * 0.2)) * clash_penalty
+         text_logic_score = ((s_tt * 0.7) + (name_fuzzy * 0.1) + (desc_fuzzy * 0.2))
     else:
          # Fallback: Rely 100% on Fuzzy Match if BERT missing
          print("⚠️ BERT missing, using fuzzy fallback")
          # Reduced name weight from 0.6 to 0.2, increased desc to 0.8
-         text_logic_score = ((name_fuzzy * 0.2) + (desc_fuzzy * 0.8)) * clash_penalty
+         text_logic_score = ((name_fuzzy * 0.2) + (desc_fuzzy * 0.8))
 
     # Visual Score (Context-Aware)
     has_q_clip = query_feats['clip_img'] is not None
@@ -260,7 +264,7 @@ def calculate_match_score(query_item, query_img_path, query_feats, target_item, 
        (target_feats['ocr_txt'] and q_name in target_feats['ocr_txt']):
         ocr_boost = 0.2
 
-    final_score = ((base_score * 0.85) + (loc_score * 0.05) + (col_score * 0.05) + (time_score * 0.05) + ocr_boost) * multiplier
+    final_score = ((base_score * 0.85) + (loc_score * 0.05) + (col_score * 0.05) + (time_score * 0.05) + ocr_boost) * multiplier * clash_penalty
     
     breakdown = {
         "base_score": float(base_score),
