@@ -1,6 +1,4 @@
-<div align="center">
-  <img src="docs/images/logo.png" width="250" alt="Findeka Logo" />
-</div>
+![Findeka Banner](docs/images/banner.png)
 
 # Findeka - AI Lost & Found System
 
