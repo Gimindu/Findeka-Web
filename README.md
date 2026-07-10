@@ -1,6 +1,17 @@
+![Findeka Banner](docs/images/banner.png)
+
 # Findeka - AI Lost & Found System
 
 Findeka is an intelligent Lost & Found application that uses a hybrid AI approach to match lost items with found items. It combines **text analysis** (BERT) and **computer vision** (CLIP, MobileNetV2, EasyOCR) to rank potential matches based on visual similarity, semantic description matching, and location/time proximity.
+
+---
+
+## 📸 Screenshots
+*(Replace these placeholders with actual screenshots of your application)*
+
+| Dashboard | Item Match Analysis |
+|-----------|----------------------|
+| <img src="docs/images/placeholder_dashboard.png" width="400" alt="Dashboard Screenshot" /> | <img src="docs/images/placeholder_analysis.png" width="400" alt="Analysis Screenshot" /> |
 
 ---
 

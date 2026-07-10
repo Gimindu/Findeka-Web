@@ -16,5 +16,5 @@ for p in [STORAGE_DIR, LOST_IMG_FOLDER, FOUND_IMG_FOLDER, MODELS_FOLDER]:
 
 # Database
 # Note: In production, use environment variables!
-MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://Gimindu:oOLgMNHtR3X87s22@cluster0.hu5yjav.mongodb.net/")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://Gimindu:oOLgMNHtR3X87s22@cluster0.hu5yjav.mongodb.net/?appName=Cluster0")
 DB_NAME = "lost_and_found"
