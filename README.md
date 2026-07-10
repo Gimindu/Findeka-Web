@@ -11,7 +11,7 @@ Findeka is an intelligent Lost & Found application that uses a hybrid AI approac
 
 | Dashboard | Item Match Analysis |
 |-----------|----------------------|
-| <img src="docs/images/placeholder_dashboard.png" width="400" alt="Dashboard Screenshot" /> | <img src="docs/images/placeholder_analysis.png" width="400" alt="Analysis Screenshot" /> |
+| <img src="docs/images/dashboard.png" width="400" alt="Dashboard Screenshot" /> | <img src="docs/images/placeholder_analysis.png" width="400" alt="Analysis Screenshot" /> |
 
 ---
 
